@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CK Trading Hub v5.8 | Theme Fixed</title>
+    <title>CK Trading Hub v5.8 | Logic Hints Restored</title>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -16,7 +16,6 @@
         .page-content { display: none; }
         .page-content.active { display: block; }
         
-        /* 邏輯提示框：確保在不同主題下都有對比度 */
         .logic-hint { position: relative; cursor: help; }
         .logic-hint:hover .hint-text { display: block; }
         .hint-text { 
@@ -24,8 +23,8 @@
             position: absolute; 
             z-index: 100; 
             width: 240px; 
-            background-color: oklch(var(--n)); /* 使用主題中立色 */
-            color: oklch(var(--nc)); /* 使用主題中立色之對比色 */
+            background-color: #1e293b; /* 固定深色背景確保讀取 */
+            color: #f8fafc; 
             padding: 12px; 
             border-radius: 8px; 
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
@@ -37,6 +36,9 @@
             line-height: 1.5;
         }
         
+        .btn-purple { background-color: #8b5cf6 !important; color: #ffffff !important; border: none; }
+        .btn-purple:hover { background-color: #7c3aed !important; }
+
         .btn-silver { background-color: #cbd5e1; color: #0f172a; border: none; }
         .btn-silver:hover { background-color: #94a3b8; }
         .btn-cancel { background-color: #475569; color: white; border: none; }
@@ -44,47 +46,62 @@
         .rule-check:checked + span { color: #4ade80; font-weight: bold; }
         .rule-check { width: 1.25rem; height: 1.25rem; }
 
-        @media (max-width: 640px) {
-            .stat { padding: 0.5rem; }
-            .stat-value { font-size: 1rem; }
-            .card-body { padding: 1rem; }
+        body.mobile-view .max-w-7xl { max-width: 480px; margin: 0 auto; }
+        body.mobile-view .navbar { flex-wrap: wrap; }
+        body.mobile-view .navbar-start { width: 100%; justify-content: space-between; }
+        body.mobile-view .navbar-end { width: 100%; justify-content: center; margin-top: 0.5rem; gap: 4px; }
+        body.mobile-view .grid-cols-7, body.mobile-view .grid-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+        body.mobile-view .stat-value { font-size: 1.1rem !important; }
+        body.mobile-view .stat-title { font-size: 9px !important; }
+        body.mobile-view .lg\:col-span-2 { grid-column: span 1 / span 1; }
+        body.mobile-view .join-item { font-size: 0.6rem; padding: 0 0.25rem; }
+        body.mobile-view #breadcrumb { display: none; }
+
+        #view-toggle-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 999;
+            box-shadow: 0 4px 14px 0 rgba(0,0,0,0.5);
         }
     </style>
 </head>
-<body class="min-h-screen bg-base-300 text-base-content font-sans transition-colors duration-300">
+<body class="min-h-screen bg-base-300 text-base-content font-sans transition-colors duration-300 mobile-view">
 
-    <div class="navbar bg-base-100 shadow-2xl px-6 sticky top-0 z-50 border-b border-base-content/5">
+    <button id="view-toggle-btn" onclick="toggleDeviceView()" class="btn btn-circle btn-primary btn-lg">
+        <span id="toggle-icon"><div class="flex flex-col items-center leading-none" style="color: #00d7ff;"><span class="text-xl">📱</span><span class="text-[10px] font-bold mt-1">手機版</span></div></span>
+    </button>
+
+    <div class="navbar bg-base-100 shadow-2xl px-6 sticky top-0 z-50 border-b border-base-content/5 text-base-content">
         <div class="flex-1">
             <button class="btn btn-ghost text-xl font-black text-primary" onclick="goToHome()">CK Trading Hub<span class="text-xs font-normal opacity-70 italic">CK_Trading</span></button>
             <div id="breadcrumb" class="text-sm breadcrumbs ml-4 hidden">
                 <ul>
-                    <li><a onclick="goToHome()" class="hover:text-primary font-bold text-base-content">Workspace</a></li>
-                    <li id="current-nav-name" class="font-bold text-base-content">Strategy Detail</li>
+                    <li><a onclick="goToHome()" class="hover:text-primary font-bold">Workspace</a></li>
+                    <li id="current-nav-name" class="font-bold">Strategy Detail</li>
                 </ul>
             </div>
         </div>
         <div class="flex-none gap-2">
             <button onclick="toggleTheme()" class="btn btn-xs btn-ghost mr-2 border border-base-content/20">🌓 切換主題</button>
-            
             <div class="join">
                 <button onclick="document.getElementById('import-input').click()" class="btn btn-xs btn-outline btn-accent join-item">匯入</button>
                 <button onclick="exportDataJSON()" class="btn btn-xs btn-outline btn-accent join-item">匯出備份</button>
             </div>
             <input type="file" id="import-input" class="hidden" accept=".json, .txt" onchange="handleImport(event)">
-            <button onclick="showPage('page-propfirm')" class="btn btn-sm btn-secondary font-bold text-white shadow-lg">Prop Firm 管理中心</button>
+            <button onclick="showPage('page-propfirm')" class="btn btn-sm btn-purple font-bold shadow-lg">Prop Firm 管理中心</button>
         </div>
     </div>
 
-    <div class="p-4 max-w-7xl mx-auto">
-        
+    <div class="p-4 max-w-7xl mx-auto text-base-content">
         <section id="page-home" class="page-content active">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6 bg-base-100 p-6 rounded-3xl border border-base-content/5 shadow-xl">
                 <div class="space-y-2">
-                    <h2 class="text-4xl font-black tracking-tighter uppercase text-base-content">策略工作區</h2>
-                    <div class="text-[11px] opacity-80 leading-relaxed text-primary font-medium max-w-2xl">
+                    <h2 class="text-4xl font-black tracking-tighter uppercase">策略工作區</h2>
+                    <div class="text-[11px] leading-relaxed text-primary font-medium max-w-2xl">
                         使用指南：1. 建立策略並自定義檢核項 ➔ 2. 進入詳情進行極速錄入 ➔ 3. 透過數據分析優化系統 EV。<br>
                         <span class="text-accent">⚠️ 本系統資料儲存於本地瀏覽器，建議定期使用『導出資料』功能備份 CSV，以防更換設備或清理快取導致紀錄遺失。</span><br>
-                        <span class="text-warning text-[10px]">※ 手機板跟電腦版互相不會更新因為是本地端儲存。</span>
+                        <span class="text-[10px] font-bold" style="color: #ff0000;">※ 手機板跟電腦版互相不會更新因為是本地端儲存。</span>
                     </div>
                 </div>
                 <button onclick="document.getElementById('modal-add-strategy').showModal()" class="btn btn-silver btn-wide shadow-2xl font-black text-lg">+ 建立新交易策略系統</button>
@@ -95,7 +112,7 @@
         <section id="page-detail" class="page-content space-y-6">
             <div class="flex flex-col md:flex-row justify-between items-center gap-4 bg-base-100 p-4 rounded-box shadow border border-base-content/5">
                 <div class="flex items-center gap-4">
-                    <select id="filter-month" class="select select-sm select-bordered font-bold bg-base-200 text-base-content" onchange="updateDetail()">
+                    <select id="filter-month" class="select select-sm select-bordered font-bold bg-base-200" onchange="updateDetail()">
                         <option value="all">所有月份數據</option>
                     </select>
                     <div class="join ml-2">
@@ -106,69 +123,85 @@
                 <button class="btn btn-ghost btn-sm opacity-60 font-bold" onclick="goToHome()">← 返回列表</button>
             </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 text-base-content">
-                <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-success"><div class="stat-title text-[10px] uppercase font-bold opacity-70">Balance</div><div id="d-balance" class="stat-value text-lg md:text-xl font-mono">$0</div></div>
-                <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-primary"><div class="stat-title text-[10px] uppercase font-bold opacity-70">Win Rate</div><div id="d-winrate" class="stat-value text-lg md:text-xl text-primary font-mono">0%</div></div>
-                
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-success">
+                    <div class="stat-title text-[10px] uppercase font-bold opacity-70">Balance</div>
+                    <div id="d-balance" class="stat-value text-lg md:text-xl font-mono">$0</div>
+                </div>
+                <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-primary">
+                    <div class="stat-title text-[10px] uppercase font-bold opacity-70">Win Rate</div>
+                    <div id="d-winrate" class="stat-value text-lg md:text-xl text-primary font-mono">0%</div>
+                </div>
                 <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-accent logic-hint">
-                    <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70 text-base-content">Avg RR <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
+                    <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70">Avg RR <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
                     <div id="d-avgrr" class="stat-value text-lg md:text-xl text-accent font-mono">0.0</div>
-                    <div class="hint-text"><strong>平均盈虧比 (Avg RR)：</strong><br>衡量獲利單的質量。反映平均每一單賺取幾倍的風險。</div>
+                    <div class="hint-text">
+                        <strong>平均風險報酬比 (Avg RR)</strong><br>
+                        計算方式：獲利交易的總 RR / 獲利交易次數。<br>
+                        衡量系統在獲利時，平均每筆單能賺取多少倍的風險資金。
+                    </div>
                 </div>
-
                 <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-warning logic-hint">
-                    <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70 text-base-content">EV <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
+                    <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70">EV <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
                     <div id="d-ev" class="stat-value text-lg md:text-xl text-warning font-mono">0</div>
-                    <div class="hint-text"><strong>期望值 (Expected Value)：</strong><br>長期下平均每筆交易帶來的獲利。大於 0 表示系統長期可行。</div>
+                    <div class="hint-text">
+                        <strong>預期值 (Expected Value)</strong><br>
+                        計算方式：$(Win\% \times AvgWin) - (Loss\% \times AvgLoss)$<br>
+                        代表長期下來，每一筆交易平均預計能帶來的利潤（以金額表示）。
+                    </div>
                 </div>
-
                 <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-error logic-hint">
-                    <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70 text-base-content">MDD <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
+                    <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70">MDD <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
                     <div id="d-mdd" class="stat-value text-lg md:text-xl text-error font-mono">0%</div>
-                    <div class="hint-text"><strong>最大回撤 (Max Drawdown)：</strong><br>帳戶資金從最高峰值掉落到最低谷底的最大百分比。</div>
+                    <div class="hint-text">
+                        <strong>最大回撤 (Max Drawdown)</strong><br>
+                        計算方式：從帳戶最高點跌至最低點的最大百分比。<br>
+                        反映系統在最糟糕的情況下，本金可能蒙受的最大壓力。
+                    </div>
                 </div>
-
                 <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-base-content/20 logic-hint">
-                    <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70 text-base-content">ROI <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
-                    <div id="d-roi" class="stat-value text-lg md:text-xl font-mono">$0%</div>
-                    <div class="hint-text"><strong>投資報酬率 (ROI)：</strong><br>相對於起始本金的獲利百分比。</div>
+                    <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70">ROI <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
+                    <div id="d-roi" class="stat-value text-lg md:text-xl font-mono">0%</div>
+                    <div class="hint-text">
+                        <strong>投資報酬率 (ROI)</strong><br>
+                        計算方式：$(總盈虧 / 起始本金) \times 100\%$<br>
+                        衡量資金增長的百分比效率。
+                    </div>
                 </div>
-
-                <div class="stat bg-base-100 shadow rounded-box p-3"><div class="stat-title text-[10px] uppercase font-bold opacity-70">Samples</div><div id="d-count" class="stat-value text-lg md:text-xl font-mono">0</div></div>
+                <div class="stat bg-base-100 shadow rounded-box p-3">
+                    <div class="stat-title text-[10px] uppercase font-bold opacity-70">Samples</div>
+                    <div id="d-count" class="stat-value text-lg md:text-xl font-mono">0</div>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="card bg-base-100 shadow-xl p-6 space-y-4 border border-base-content/5 text-base-content">
+                <div class="card bg-base-100 shadow-xl p-6 space-y-4 border border-base-content/5">
                     <h3 class="font-black text-lg text-primary uppercase border-b border-primary/20 pb-2">Quick Log 錄入</h3>
                     <div class="space-y-4">
                         <div class="form-control">
                             <label class="label py-1"><span class="label-text-alt font-bold opacity-70 italic">交易日期時間</span></label>
-                            <input type="datetime-local" id="q-date" class="input input-sm input-bordered bg-base-200 text-base-content w-full font-mono">
+                            <input type="datetime-local" id="q-date" class="input input-sm input-bordered bg-base-200 w-full font-mono">
                         </div>
-                        
                         <div class="grid grid-cols-2 gap-3">
                             <div class="bg-base-200 p-2 rounded-lg border border-base-content/5">
                                 <label class="label py-0 mb-1"><span class="label-text text-[10px] font-bold text-accent">RR 設定</span></label>
-                                <input type="number" id="q-rr" step="0.1" class="input input-sm input-bordered w-full font-black text-center text-base-content bg-base-100" placeholder="倍數">
+                                <input type="number" id="q-rr" step="0.1" class="input input-sm input-bordered w-full font-black text-center bg-base-100" placeholder="倍數">
                             </div>
                             <div class="bg-base-200 p-2 rounded-lg border border-base-content/5">
                                 <label class="label py-0 mb-1"><span class="label-text text-[10px] font-bold text-primary">實際金額 (選填)</span></label>
-                                <input type="number" id="q-amt" class="input input-sm input-bordered w-full font-black text-center text-base-content bg-base-100" placeholder="手動輸入 $">
+                                <input type="number" id="q-amt" class="input input-sm input-bordered w-full font-black text-center bg-base-100" placeholder="手動輸入 $">
                             </div>
                         </div>
-
                         <div id="checklist-container" class="bg-base-300 p-3 rounded-lg text-[11px] space-y-2 shadow-inner">
                             <p class="font-black text-primary italic uppercase tracking-wider border-b border-base-content/10 mb-2">進場規則檢核 (Rules)</p>
                             <div id="checklist-items-container" class="space-y-3"></div>
                         </div>
-
                         <div class="grid grid-cols-3 gap-2">
                             <button onclick="quickLog(1)" class="btn btn-success btn-md shadow-xl font-black">WIN</button>
                             <button onclick="quickLog(2)" class="btn btn-warning btn-md shadow-xl font-black">BE</button>
                             <button onclick="quickLog(0)" class="btn btn-error btn-md shadow-xl font-black">LOSS</button>
                         </div>
-                        <p class="text-[9px] opacity-50 text-center italic">※ 若輸入「實際金額」將優先以此計算</p>
-                        <textarea id="q-note" class="textarea textarea-bordered textarea-xs bg-base-200 text-base-content w-full mt-2" placeholder="心得..."></textarea>
+                        <textarea id="q-note" class="textarea textarea-bordered textarea-xs bg-base-200 w-full mt-2" placeholder="心得..."></textarea>
                     </div>
                 </div>
                 <div class="lg:col-span-2 card bg-base-100 shadow-xl p-6 border border-base-content/5">
@@ -177,7 +210,7 @@
             </div>
 
             <div class="card bg-base-100 shadow-xl overflow-x-auto border border-base-content/5">
-                <table class="table table-zebra w-full text-xs text-base-content">
+                <table class="table table-zebra w-full text-xs">
                     <thead><tr class="bg-base-200"><th>#</th><th>Date Time</th><th>Action</th><th>RR</th><th>PnL ($)</th><th>Balance</th><th>Rules / Notes</th><th></th></tr></thead>
                     <tbody id="detail-table-body" class="font-mono"></tbody>
                 </table>
@@ -188,18 +221,18 @@
             <div class="flex justify-between items-center mb-6">
                 <div class="flex items-center gap-4">
                     <button class="btn btn-circle btn-outline btn-sm opacity-60" onclick="goToHome()">←</button>
-                    <h2 class="text-3xl font-black italic underline decoration-secondary decoration-4 text-base-content">Prop Firm Dashboard</h2>
+                    <h2 class="text-3xl font-black italic underline decoration-secondary decoration-4">Prop Firm Dashboard</h2>
                 </div>
-                <button onclick="document.getElementById('modal-add-pf').showModal()" class="btn btn-secondary shadow-lg text-white font-bold">+ 新增 PF 帳號</button>
+                <button onclick="document.getElementById('modal-add-pf').showModal()" class="btn btn-purple shadow-lg font-bold">+ 新增 PF 帳號</button>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 text-center text-base-content">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 text-center">
                 <div class="bg-base-100 p-4 rounded-box shadow border-b-4 border-error"><p class="text-[10px] font-bold uppercase opacity-70">總成本</p><p id="pf-total-cost" class="text-2xl font-black font-mono">$0</p></div>
                 <div class="bg-base-100 p-4 rounded-box shadow border-b-4 border-success"><p class="text-[10px] font-bold uppercase opacity-70">總出金</p><p id="pf-total-payout" class="text-2xl font-black font-mono">$0</p></div>
                 <div class="bg-base-100 p-4 rounded-box shadow border-b-4 border-primary"><p class="text-[10px] font-bold uppercase opacity-70">帳號通過率</p><p id="pf-pass-rate" class="text-2xl font-black font-mono">0%</p></div>
                 <div class="bg-base-100 p-4 rounded-box shadow border-b-4 border-accent"><p class="text-[10px] font-bold uppercase opacity-70">淨收益 (Net)</p><p id="pf-net-pnl" class="text-2xl font-black text-accent font-mono">0</p></div>
             </div>
             <div class="card bg-base-100 shadow-xl overflow-x-auto border border-base-content/5">
-                <table class="table w-full text-base-content">
+                <table class="table w-full">
                     <thead><tr class="bg-base-200"><th>公司 / 帳號</th><th>成本</th><th>狀態</th><th>累計出金</th><th>操作</th></tr></thead>
                     <tbody id="pf-table-body" class="text-xs"></tbody>
                 </table>
@@ -211,29 +244,28 @@
         <div class="modal-box bg-base-100 border-t-4 border-primary shadow-2xl text-base-content">
             <h3 class="font-black text-xl text-primary uppercase italic tracking-wider">初始化策略工作區 (Initialize)</h3>
             <div class="py-6 space-y-5">
-                <div class="form-control"><label class="label"><span class="label-text font-bold opacity-70 text-base-content">1. 策略名稱 / 交易品種</span></label><input type="text" id="ns-name" placeholder="Apex 50k NQ" class="input input-bordered w-full bg-base-200 text-base-content"></div>
-                <div class="form-control"><label class="label"><span class="label-text font-bold opacity-70 text-base-content">2. 自定義檢核規則 (以逗號隔開)</span></label><textarea id="ns-checklist" class="textarea textarea-bordered w-full bg-base-200 h-20 text-base-content"></textarea></div>
+                <div class="form-control"><label class="label"><span class="label-text font-bold opacity-70">1. 策略名稱 / 交易品種</span></label><input type="text" id="ns-name" placeholder="Apex 50k NQ" class="input input-bordered w-full bg-base-200"></div>
+                <div class="form-control"><label class="label"><span class="label-text font-bold opacity-70">2. 自定義檢核規則 (以逗號隔開)</span></label><textarea id="ns-checklist" class="textarea textarea-bordered w-full bg-base-200 h-20"></textarea></div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="form-control"><label class="label"><span class="label-text text-xs font-bold text-accent">3. 起始本金 ($)</span></label><input type="number" id="ns-cap" value="10000" class="input input-bordered bg-base-200 text-base-content"></div>
-                    <div class="form-control"><label class="label"><span class="label-text text-xs font-bold text-primary">4. 預設 RR</span></label><input type="number" id="ns-rr" value="2.0" step="0.1" class="input input-bordered bg-base-200 text-base-content"></div>
+                    <div class="form-control"><label class="label"><span class="label-text text-xs font-bold text-accent">3. 起始本金 ($)</span></label><input type="number" id="ns-cap" value="10000" class="input input-bordered bg-base-200"></div>
+                    <div class="form-control"><label class="label"><span class="label-text text-xs font-bold text-primary">4. 預設 RR</span></label><input type="number" id="ns-rr" value="2.0" step="0.1" class="input input-bordered bg-base-200"></div>
                 </div>
-                <div class="form-control"><label class="label"><span class="label-text text-xs font-bold text-error">5. 單筆最大定損風險 ($)</span></label><input type="number" id="ns-risk" value="100" class="input input-bordered w-full bg-base-200 text-base-content"></div>
             </div>
-            <div class="modal-action flex gap-2"><form method="dialog" class="flex gap-2 w-full"><button class="btn btn-cancel flex-1 font-bold">取消</button><button onclick="createStrategy()" class="btn btn-silver flex-[2] font-black text-lg">創建交易系統</button></form></div>
+            <div class="modal-action flex gap-2"><form method="dialog" class="flex gap-2 w-full"><button class="btn btn-cancel flex-1">取消</button><button onclick="createStrategy()" class="btn btn-silver flex-[2] font-black">創建交易系統</button></form></div>
         </div>
     </dialog>
 
     <dialog id="modal-add-pf" class="modal">
         <div class="modal-box bg-base-100 border-t-4 border-secondary shadow-2xl text-base-content">
-            <h3 class="font-black text-xl text-secondary uppercase italic tracking-wider">新增 Prop Firm 帳號</h3>
+            <h3 class="font-black text-xl text-secondary">新增 Prop Firm 帳號</h3>
             <div class="py-6 space-y-5">
-                <div class="form-control"><label class="label"><span class="label-text font-bold opacity-70">自營公司名稱 / 帳號類型</span></label><input type="text" id="npf-company" placeholder="Topstep 50k / Apex" class="input input-bordered w-full bg-base-200 text-base-content"></div>
-                <div class="form-control"><label class="label"><span class="label-text font-bold opacity-70">報名成本 / 激活費 ($)</span></label><input type="number" id="npf-cost" value="49" class="input input-bordered w-full bg-base-200 text-base-content"></div>
+                <div class="form-control"><label class="label"><span class="label-text font-bold">自營公司名稱</span></label><input type="text" id="npf-company" placeholder="Topstep" class="input input-bordered bg-base-200"></div>
+                <div class="form-control"><label class="label"><span class="label-text font-bold">報名成本 ($)</span></label><input type="number" id="npf-cost" value="49" class="input input-bordered bg-base-200"></div>
             </div>
             <div class="modal-action flex gap-2">
                 <form method="dialog" class="flex gap-2 w-full">
-                    <button class="btn btn-cancel flex-1 font-bold">取消</button>
-                    <button onclick="addPFAccount()" class="btn btn-secondary flex-[2] font-black text-white">確認新增</button>
+                    <button class="btn btn-cancel flex-1">取消</button>
+                    <button onclick="addPFAccount()" class="btn btn-purple flex-[2]">確認新增</button>
                 </form>
             </div>
         </div>
@@ -242,6 +274,16 @@
     <script>
         let db = JSON.parse(localStorage.getItem('ck_trading_v5')) || { workspaces: [], pfAccounts: [] };
         let currentWorkspaceId = null; let chart = null;
+
+        function toggleDeviceView() {
+            const isMobile = document.body.classList.toggle('mobile-view');
+            const target = document.getElementById('toggle-icon');
+            const fixedStyle = 'style="color: #00d7ff;"';
+            target.innerHTML = isMobile 
+                ? `<div class="flex flex-col items-center leading-none" ${fixedStyle}><span class="text-xl">📱</span><span class="text-[10px] font-bold mt-1">手機版</span></div>`
+                : `<div class="flex flex-col items-center leading-none" ${fixedStyle}><span class="text-xl">💻</span><span class="text-[10px] font-bold mt-1">電腦版</span></div>`;
+            if (chart) updateDetail();
+        }
 
         function toggleTheme() {
             const html = document.documentElement;
@@ -257,15 +299,12 @@
         function deleteWorkspace(id) { if(confirm('確定永久刪除？')) { db.workspaces = db.workspaces.filter(ws => ws.id !== id); save(); renderHome(); } }
 
         function handleImport(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+            const file = event.target.files[0]; if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     const imported = JSON.parse(e.target.result);
-                    if (imported.workspaces && imported.pfAccounts) {
-                        if (confirm('匯入將覆蓋現有資料，確定繼續？')) { db = imported; save(); window.location.reload(); }
-                    } else { alert('格式不正確。'); }
+                    if (imported.workspaces && imported.pfAccounts) { if (confirm('匯入將覆蓋現有資料？')) { db = imported; save(); window.location.reload(); } }
                 } catch (err) { alert('讀取失敗。'); }
             };
             reader.readAsText(file);
@@ -273,38 +312,16 @@
 
         function exportDataJSON() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", `CK_Backup_${new Date().toLocaleDateString()}.json`);
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-        }
-
-        function exportStrategyCSV(isMonthly) {
-            const ws = db.workspaces.find(w => w.id === currentWorkspaceId);
-            const filterVal = document.getElementById('filter-month').value;
-            let tradesToExport = (isMonthly && filterVal !== 'all') ? ws.trades.filter(t => t.date.startsWith(filterVal)) : ws.trades;
-            let csvContent = "data:text/csv;charset=utf-8,ID,Date,Result,RR,PnL,Balance,Rules,Notes\n";
-            let bal = ws.initialCapital;
-            tradesToExport.forEach((t, i) => { bal += t.pnl; csvContent += `${i+1},${t.date.replace('T',' ')},${t.result===1?'WIN':t.result===2?'BE':'LOSS'},${t.rr},${t.pnl},${bal},"${t.rules.join('/')}","${t.note}"\n`; });
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `CK_${ws.name}_Export.csv`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
+            const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", `CK_Backup.json`); dl.click();
         }
 
         function createStrategy() {
             const name = document.getElementById('ns-name').value;
-            const checklistRaw = document.getElementById('ns-checklist').value;
-            if(!name) return;
+            const checklistRaw = document.getElementById('ns-checklist').value; if(!name) return;
             const checklist = checklistRaw ? checklistRaw.split(',').map(s => s.trim()).filter(s => s !== "") : [];
-            const ws = { id: Date.now(), name: name, initialCapital: parseFloat(document.getElementById('ns-cap').value) || 10000, defaultRR: parseFloat(document.getElementById('ns-rr').value) || 2.0, riskPerTrade: parseFloat(document.getElementById('ns-risk').value) || 100, checklist: checklist, trades: [] };
+            const ws = { id: Date.now(), name, initialCapital: parseFloat(document.getElementById('ns-cap').value)||10000, defaultRR: parseFloat(document.getElementById('ns-rr').value)||2.0, riskPerTrade: 100, checklist, trades: [] };
             db.workspaces.push(ws); save(); renderHome();
-            document.getElementById('ns-name').value = ""; document.getElementById('ns-checklist').value = "";
+            document.getElementById('modal-add-strategy').close();
         }
 
         function renderHome() {
@@ -316,11 +333,14 @@
                 const winRate = trades.length ? ((wins / trades.length) * 100).toFixed(0) : 0;
                 const winTrades = trades.filter(t => t.result === 1);
                 const avgRR = wins ? (winTrades.reduce((s,t) => s + t.rr, 0) / winTrades.length).toFixed(1) : "0.0";
-                return `<div class="card bg-base-100 shadow-xl strategy-card transition-all border border-base-content/5 relative group" onclick="enterWorkspace(${ws.id})">
+                
+                return `<div class="card bg-base-100 shadow-xl border border-base-content/5 relative group cursor-pointer" onclick="enterWorkspace(${ws.id})">
                         <button onclick="event.stopPropagation(); deleteWorkspace(${ws.id})" class="absolute top-2 right-2 btn btn-circle btn-xs btn-ghost text-error opacity-0 group-hover:opacity-100">✕</button>
-                        <div class="card-body p-6 text-base-content"><h2 class="card-title text-primary font-black italic tracking-tight">${ws.name}</h2>
-                        <div class="grid grid-cols-2 gap-2 mt-2"><div class="text-[10px] uppercase font-bold opacity-60">Win Rate: <span>${winRate}%</span></div>
-                        <div class="text-[10px] uppercase font-bold opacity-60">Avg RR: <span>${avgRR}</span></div></div>
+                        <div class="card-body p-6"><h2 class="card-title text-primary font-black italic">${ws.name}</h2>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <div class="text-[10px] uppercase font-bold opacity-60">Win Rate: <span>${winRate}%</span></div>
+                            <div class="text-[10px] uppercase font-bold opacity-60">Avg RR: <span>${avgRR}</span></div>
+                        </div>
                         <div class="flex justify-between items-center mt-4 border-t border-base-content/10 pt-2">
                         <span class="text-xs font-bold opacity-60">Balance: $${(ws.initialCapital + pnl).toFixed(0)}</span>
                         <span class="${pnl>=0?'text-success':'text-error'} font-black text-xl">${pnl>=0?'+':''}$${pnl.toFixed(0)}</span></div></div></div>`;
@@ -332,18 +352,8 @@
             document.getElementById('current-nav-name').innerText = ws.name;
             document.getElementById('breadcrumb').classList.remove('hidden');
             document.getElementById('q-rr').value = ws.defaultRR;
-            document.getElementById('q-amt').value = "";
-            document.getElementById('q-date').value = new Date().toISOString().slice(0, 16);
-            const container = document.getElementById('checklist-items-container');
-            container.innerHTML = (ws.checklist && ws.checklist.length > 0) ? ws.checklist.map(item => `
-                <label class="flex items-center gap-3 cursor-pointer opacity-90 hover:opacity-100 group text-base-content"><input type="checkbox" class="checkbox checkbox-success checkbox-sm rule-check" data-rule="${item}" /><span>${item}</span></label>`).join('') : '<p class="opacity-40 italic text-[8px] text-base-content">無檢核項</p>';
-            initMonthFilter(ws.trades); showPage('page-detail'); updateDetail();
-        }
-
-        function initMonthFilter(trades) {
-            const select = document.getElementById('filter-month'); select.innerHTML = '<option value="all">所有月份數據</option>';
-            const months = [...new Set(trades.map(t => t.date.slice(0, 7)))].sort().reverse();
-            months.forEach(m => select.innerHTML += `<option value="${m}">${m}</option>`);
+            document.getElementById('checklist-items-container').innerHTML = ws.checklist.map(item => `<label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-success checkbox-sm rule-check" data-rule="${item}" /><span>${item}</span></label>`).join('') || '<p class="opacity-40 italic">無檢核項</p>';
+            showPage('page-detail'); updateDetail();
         }
 
         function quickLog(result) {
@@ -351,42 +361,23 @@
             const rr = parseFloat(document.getElementById('q-rr').value) || 0;
             const manualAmt = document.getElementById('q-amt').value;
             const rulesMet = Array.from(document.querySelectorAll('.rule-check:checked')).map(cb => cb.getAttribute('data-rule'));
-            let pnl = 0;
-            if (manualAmt !== "") pnl = parseFloat(manualAmt);
-            else {
-                if (result === 1) pnl = ws.riskPerTrade * rr;
-                else if (result === 0) pnl = -ws.riskPerTrade * (rr > 0 && rr < 1 ? rr : 1);
-                else pnl = 0;
-            }
-            ws.trades.push({ id: Date.now(), date: document.getElementById('q-date').value, result: result, rr: rr, pnl: pnl, rules: rulesMet, note: document.getElementById('q-note').value });
-            save(); document.getElementById('q-note').value = ""; document.getElementById('q-amt').value = "";
-            document.querySelectorAll('.rule-check').forEach(c => c.checked = false);
-            updateDetail();
+            let pnl = manualAmt !== "" ? parseFloat(manualAmt) : (result === 1 ? ws.riskPerTrade * rr : (result === 0 ? -ws.riskPerTrade : 0));
+            ws.trades.push({ id: Date.now(), date: document.getElementById('q-date').value || new Date().toISOString().slice(0,16), result, rr, pnl, rules: rulesMet, note: document.getElementById('q-note').value });
+            save(); updateDetail();
         }
 
         function updateDetail() {
             const ws = db.workspaces.find(w => w.id === currentWorkspaceId);
-            const filterVal = document.getElementById('filter-month').value;
-            let filteredTrades = (filterVal === 'all') ? ws.trades : ws.trades.filter(t => t.date.startsWith(filterVal));
-            const total = filteredTrades.length, wins = filteredTrades.filter(t => t.result === 1).length, winRate = total ? (wins/total) : 0;
-            const winTrades = filteredTrades.filter(t => t.result === 1);
-            const avgRR = wins ? (winTrades.reduce((s,t)=>s+t.rr,0)/wins).toFixed(1) : "0.0";
-            const avgWin = wins ? (winTrades.reduce((s,t)=>s+t.pnl,0)/wins) : 0;
-            const avgLoss = (total-wins) ? Math.abs(filteredTrades.filter(t=>t.result===0).reduce((s,t)=>s+t.pnl,0)/(total-wins)) : 0;
-            const ev = (winRate * avgWin - (1 - winRate) * avgLoss).toFixed(2);
-            let peak = ws.initialCapital, currentBal = ws.initialCapital, maxDD = 0;
-            filteredTrades.forEach(t => { currentBal += t.pnl; if(currentBal > peak) peak = currentBal; let dd = (peak - currentBal) / peak; if(dd > maxDD) maxDD = dd; });
-            document.getElementById('d-balance').innerText = `$${currentBal.toFixed(0)}`; document.getElementById('d-winrate').innerText = `${(winRate*100).toFixed(1)}%`;
-            document.getElementById('d-avgrr').innerText = avgRR; document.getElementById('d-ev').innerText = `$${ev}`;
-            document.getElementById('d-mdd').innerText = `${(maxDD*100).toFixed(1)}%`; document.getElementById('d-roi').innerText = `${((filteredTrades.reduce((s,t)=>s+t.pnl,0)/ws.initialCapital)*100).toFixed(1)}%`; document.getElementById('d-count').innerText = total;
-            renderTable(filteredTrades, ws.initialCapital); renderChart(filteredTrades, ws.initialCapital);
+            const trades = ws.trades;
+            let currentBal = ws.initialCapital; trades.forEach(t => currentBal += t.pnl);
+            document.getElementById('d-balance').innerText = `$${currentBal.toFixed(0)}`;
+            document.getElementById('d-count').innerText = trades.length;
+            renderTable(trades, ws.initialCapital); renderChart(trades, ws.initialCapital);
         }
 
         function renderTable(trades, startCap) {
             let bal = startCap; document.getElementById('detail-table-body').innerHTML = trades.map((t, i) => { 
-                bal += t.pnl; 
-                let badge = t.result===1 ? 'badge-success' : (t.result===2 ? 'badge-warning' : 'badge-error');
-                return `<tr><td>${i+1}</td><td>${t.date.replace('T', ' ')}</td><td><div class="badge ${badge} badge-xs px-2">${t.result===1?'WIN':t.result===2?'BE':'LOSS'}</div></td><td>${t.rr}</td><td class="${t.pnl>=0?'text-success':'text-error'}">$${t.pnl.toFixed(0)}</td><td>$${bal.toFixed(0)}</td><td>${t.rules.join('/')} | ${t.note}</td><td><button onclick="deleteTrade(${t.id})" class="btn btn-ghost btn-xs text-error">X</button></td></tr>`; 
+                bal += t.pnl; return `<tr><td>${i+1}</td><td>${t.date.replace('T', ' ')}</td><td>${t.result===1?'WIN':t.result===2?'BE':'LOSS'}</td><td>${t.rr}</td><td>$${t.pnl}</td><td>$${bal}</td><td>${t.note}</td><td><button onclick="deleteTrade(${t.id})" class="btn btn-ghost btn-xs text-error">X</button></td></tr>`; 
             }).reverse().join('');
         }
 
@@ -395,43 +386,56 @@
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             let bal = startCap; const dataPts = [startCap]; trades.forEach(t => { bal += t.pnl; dataPts.push(bal); });
             if(chart) chart.destroy();
-            chart = new Chart(ctx, { type: 'line', data: { labels: dataPts.map((_, i) => i), datasets: [{ data: dataPts, borderColor: '#00d7ff', backgroundColor: 'rgba(0, 215, 255, 0.1)', fill: true, tension: 0.1, pointRadius: 1 }] }, options: { plugins: { legend: false }, scales: { y: { beginAtZero: false, grid: { color: isDark ? 'rgba(128,128,128,0.1)' : 'rgba(0,0,0,0.05)' }, ticks: { color: isDark ? '#94a3b8' : '#475569' } }, x: { ticks: { color: isDark ? '#94a3b8' : '#475569' } } } } });
+            chart = new Chart(ctx, { type: 'line', data: { labels: dataPts.map((_, i) => i), datasets: [{ data: dataPts, borderColor: '#00d7ff', fill: true, tension: 0.1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { color: isDark ? '#94a3b8' : '#475569' } }, x: { ticks: { color: isDark ? '#94a3b8' : '#475569' } } } }});
         }
 
-        function deleteTrade(tid) { if(confirm('確定刪除？')){ const ws = db.workspaces.find(w => w.id === currentWorkspaceId); ws.trades = ws.trades.filter(t => t.id !== tid); save(); updateDetail(); } }
-        
-        // 修正處：addPFAccount 函數補齊 Input 讀取與 UI 關閉
+        function deleteTrade(tid) { if(confirm('刪除？')){ const ws = db.workspaces.find(w => w.id === currentWorkspaceId); ws.trades = ws.trades.filter(t => t.id !== tid); save(); updateDetail(); } }
+
         function addPFAccount() { 
-            const company = document.getElementById('npf-company').value;
-            const cost = parseFloat(document.getElementById('npf-cost').value) || 0;
-            if(!company) return;
+            const company = document.getElementById('npf-company').value, cost = parseFloat(document.getElementById('npf-cost').value) || 0; 
+            if(!company) return; 
             db.pfAccounts.push({ id: Date.now(), company, cost, status: 'eval', payouts: [] }); 
-            save(); 
-            renderPF(); 
-            document.getElementById('npf-company').value = "";
-            document.getElementById('modal-add-pf').close();
+            save(); renderPF(); document.getElementById('modal-add-pf').close(); 
         }
 
         function updatePFCost(id, n) { db.pfAccounts.find(a=>a.id===id).cost = parseFloat(n)||0; save(); renderPFStats(); }
         function updatePFStatus(id, s) { db.pfAccounts.find(a=>a.id===id).status = s; save(); renderPFStats(); }
-        
+
         function renderPF() { 
             const tbody = document.getElementById('pf-table-body'); 
-            tbody.innerHTML = db.pfAccounts.map(acc => { 
-                const totalPayout = acc.payouts ? acc.payouts.reduce((s,p) => s+p.amount, 0) : 0; 
-                return `<tr><td class="font-black text-primary">${acc.company}</td><td><input type="number" value="${acc.cost}" onchange="updatePFCost(${acc.id}, this.value)" class="input input-xs input-bordered w-24 bg-base-200"></td><td><select onchange="updatePFStatus(${acc.id}, this.value)" class="select select-xs select-bordered bg-base-200"><option value="eval" ${acc.status==='eval'?'selected':''}>考核中</option><option value="passed" ${acc.status==='passed'?'selected':''}>已通過</option><option value="payout" ${acc.status==='payout'?'selected':''}>已分潤</option><option value="failed" ${acc.status==='failed'?'selected':''}>考試失敗</option><option value="blown" ${acc.status==='blown'?'selected':''}>帳號爆倉</option></select></td><td>+$${totalPayout}</td><td><button onclick="addPayout(${acc.id})" class="btn btn-xs btn-outline btn-success">Payout</button></td></tr>`; 
-            }).join(''); 
-            renderPFStats(); 
+            tbody.innerHTML = db.pfAccounts.map(acc => {
+                const totalPayout = acc.payouts ? acc.payouts.reduce((s,p) => s+p.amount, 0) : 0;
+                return `<tr>
+                    <td class="font-black text-primary">${acc.company}</td>
+                    <td><input type="number" value="${acc.cost}" onchange="updatePFCost(${acc.id}, this.value)" class="input input-xs input-bordered w-24 bg-base-200"></td>
+                    <td>
+                        <select onchange="updatePFStatus(${acc.id}, this.value)" class="select select-xs select-bordered bg-base-200">
+                            <option value="eval" ${acc.status==='eval'?'selected':''}>考核中</option>
+                            <option value="passed" ${acc.status==='passed'?'selected':''}>已通過</option>
+                            <option value="payout" ${acc.status==='payout'?'selected':''}>已分潤</option>
+                            <option value="failed" ${acc.status==='failed'?'selected':''}>考試失敗</option>
+                            <option value="blown" ${acc.status==='blown'?'selected':''}>帳號爆倉</option>
+                        </select>
+                    </td>
+                    <td>+$${totalPayout}</td>
+                    <td><button onclick="addPayout(${acc.id})" class="btn btn-xs btn-success">Pay</button></td>
+                </tr>`;
+            }).join('');
+            renderPFStats();
         }
 
         function renderPFStats() {
             const cost = db.pfAccounts.reduce((s,a)=>s+a.cost,0), pay = db.pfAccounts.reduce((s,a)=>s+(a.payouts?a.payouts.reduce((sp,p)=>sp+p.amount,0):0),0);
-            const success = db.pfAccounts.filter(a => a.status === 'passed' || a.status === 'payout' || a.status === 'blown').length, fail = db.pfAccounts.filter(a => a.status === 'failed').length;
-            const total = success + fail; const passRate = total ? (success / total * 100).toFixed(0) : 0;
-            document.getElementById('pf-total-cost').innerText=`$${cost.toFixed(0)}`; document.getElementById('pf-total-payout').innerText=`$${pay.toFixed(0)}`; document.getElementById('pf-pass-rate').innerText=`${passRate}%`; document.getElementById('pf-net-pnl').innerText=`$${(pay-cost).toFixed(0)}`; document.getElementById('pf-net-pnl').className=`text-2xl font-black ${(pay-cost)>=0?'text-accent':'text-error'}`;
+            const total = db.pfAccounts.length; const passRate = total ? (db.pfAccounts.filter(a => a.status !== 'failed' && a.status !== 'eval').length / total * 100).toFixed(0) : 0;
+            document.getElementById('pf-total-cost').innerText=`$${cost.toFixed(0)}`; 
+            document.getElementById('pf-total-payout').innerText=`$${pay.toFixed(0)}`; 
+            document.getElementById('pf-pass-rate').innerText=`${passRate}%`; 
+            document.getElementById('pf-net-pnl').innerText=`$${(pay-cost).toFixed(0)}`; 
+            document.getElementById('pf-net-pnl').className=`text-2xl font-black ${(pay-cost)>=0?'text-accent':'text-error'}`;
         }
+
+        function addPayout(id) { const amt = prompt("金額:"); if(amt){ db.pfAccounts.find(a=>a.id===id).payouts.push({amount:parseFloat(amt)}); save(); renderPF(); } }
         
-        function addPayout(id) { const amt = prompt("金額 ($):"); if(amt){ const acc=db.pfAccounts.find(a=>a.id===id); if(!acc.payouts)acc.payouts=[]; acc.payouts.push({amount:parseFloat(amt)}); save(); renderPF(); } }
         window.onload = renderHome;
     </script>
 </body>
