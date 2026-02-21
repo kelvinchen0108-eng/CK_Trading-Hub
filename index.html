@@ -223,6 +223,22 @@
         </div>
     </dialog>
 
+    <dialog id="modal-add-pf" class="modal">
+        <div class="modal-box bg-base-100 border-t-4 border-secondary shadow-2xl text-base-content">
+            <h3 class="font-black text-xl text-secondary uppercase italic tracking-wider">新增 Prop Firm 帳號</h3>
+            <div class="py-6 space-y-5">
+                <div class="form-control"><label class="label"><span class="label-text font-bold opacity-70">自營公司名稱 / 帳號類型</span></label><input type="text" id="npf-company" placeholder="Topstep 50k / Apex" class="input input-bordered w-full bg-base-200 text-base-content"></div>
+                <div class="form-control"><label class="label"><span class="label-text font-bold opacity-70">報名成本 / 激活費 ($)</span></label><input type="number" id="npf-cost" value="49" class="input input-bordered w-full bg-base-200 text-base-content"></div>
+            </div>
+            <div class="modal-action flex gap-2">
+                <form method="dialog" class="flex gap-2 w-full">
+                    <button class="btn btn-cancel flex-1 font-bold">取消</button>
+                    <button onclick="addPFAccount()" class="btn btn-secondary flex-[2] font-black text-white">確認新增</button>
+                </form>
+            </div>
+        </div>
+    </dialog>
+
     <script>
         let db = JSON.parse(localStorage.getItem('ck_trading_v5')) || { workspaces: [], pfAccounts: [] };
         let currentWorkspaceId = null; let chart = null;
@@ -232,7 +248,6 @@
             const current = html.getAttribute('data-theme');
             const target = current === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', target);
-            // 同步更新 Chart 顏色
             if (chart) updateDetail();
         }
 
@@ -384,16 +399,38 @@
         }
 
         function deleteTrade(tid) { if(confirm('確定刪除？')){ const ws = db.workspaces.find(w => w.id === currentWorkspaceId); ws.trades = ws.trades.filter(t => t.id !== tid); save(); updateDetail(); } }
-        function addPFAccount() { const company = document.getElementById('npf-company').value, cost = parseFloat(document.getElementById('npf-cost').value) || 0; db.pfAccounts.push({ id: Date.now(), company, cost, status: 'eval', payouts: [] }); save(); renderPF(); }
+        
+        // 修正處：addPFAccount 函數補齊 Input 讀取與 UI 關閉
+        function addPFAccount() { 
+            const company = document.getElementById('npf-company').value;
+            const cost = parseFloat(document.getElementById('npf-cost').value) || 0;
+            if(!company) return;
+            db.pfAccounts.push({ id: Date.now(), company, cost, status: 'eval', payouts: [] }); 
+            save(); 
+            renderPF(); 
+            document.getElementById('npf-company').value = "";
+            document.getElementById('modal-add-pf').close();
+        }
+
         function updatePFCost(id, n) { db.pfAccounts.find(a=>a.id===id).cost = parseFloat(n)||0; save(); renderPFStats(); }
         function updatePFStatus(id, s) { db.pfAccounts.find(a=>a.id===id).status = s; save(); renderPFStats(); }
-        function renderPF() { const tbody = document.getElementById('pf-table-body'); tbody.innerHTML = db.pfAccounts.map(acc => { const totalPayout = acc.payouts ? acc.payouts.reduce((s,p) => s+p.amount, 0) : 0; return `<tr><td class="font-black text-primary">${acc.company}</td><td><input type="number" value="${acc.cost}" onchange="updatePFCost(${acc.id}, this.value)" class="input input-xs input-bordered w-24 bg-base-200"></td><td><select onchange="updatePFStatus(${acc.id}, this.value)" class="select select-xs select-bordered bg-base-200"><option value="eval" ${acc.status==='eval'?'selected':''}>考核中</option><option value="passed" ${acc.status==='passed'?'selected':''}>已通過</option><option value="payout" ${acc.status==='payout'?'selected':''}>已分潤</option><option value="failed" ${acc.status==='failed'?'selected':''}>考試失敗</option><option value="blown" ${acc.status==='blown'?'selected':''}>帳號爆倉</option></select></td><td>+$${totalPayout}</td><td><button onclick="addPayout(${acc.id})" class="btn btn-xs btn-outline btn-success">Payout</button></td></tr>`; }).join(''); renderPFStats(); }
+        
+        function renderPF() { 
+            const tbody = document.getElementById('pf-table-body'); 
+            tbody.innerHTML = db.pfAccounts.map(acc => { 
+                const totalPayout = acc.payouts ? acc.payouts.reduce((s,p) => s+p.amount, 0) : 0; 
+                return `<tr><td class="font-black text-primary">${acc.company}</td><td><input type="number" value="${acc.cost}" onchange="updatePFCost(${acc.id}, this.value)" class="input input-xs input-bordered w-24 bg-base-200"></td><td><select onchange="updatePFStatus(${acc.id}, this.value)" class="select select-xs select-bordered bg-base-200"><option value="eval" ${acc.status==='eval'?'selected':''}>考核中</option><option value="passed" ${acc.status==='passed'?'selected':''}>已通過</option><option value="payout" ${acc.status==='payout'?'selected':''}>已分潤</option><option value="failed" ${acc.status==='failed'?'selected':''}>考試失敗</option><option value="blown" ${acc.status==='blown'?'selected':''}>帳號爆倉</option></select></td><td>+$${totalPayout}</td><td><button onclick="addPayout(${acc.id})" class="btn btn-xs btn-outline btn-success">Payout</button></td></tr>`; 
+            }).join(''); 
+            renderPFStats(); 
+        }
+
         function renderPFStats() {
             const cost = db.pfAccounts.reduce((s,a)=>s+a.cost,0), pay = db.pfAccounts.reduce((s,a)=>s+(a.payouts?a.payouts.reduce((sp,p)=>sp+p.amount,0):0),0);
             const success = db.pfAccounts.filter(a => a.status === 'passed' || a.status === 'payout' || a.status === 'blown').length, fail = db.pfAccounts.filter(a => a.status === 'failed').length;
             const total = success + fail; const passRate = total ? (success / total * 100).toFixed(0) : 0;
             document.getElementById('pf-total-cost').innerText=`$${cost.toFixed(0)}`; document.getElementById('pf-total-payout').innerText=`$${pay.toFixed(0)}`; document.getElementById('pf-pass-rate').innerText=`${passRate}%`; document.getElementById('pf-net-pnl').innerText=`$${(pay-cost).toFixed(0)}`; document.getElementById('pf-net-pnl').className=`text-2xl font-black ${(pay-cost)>=0?'text-accent':'text-error'}`;
         }
+        
         function addPayout(id) { const amt = prompt("金額 ($):"); if(amt){ const acc=db.pfAccounts.find(a=>a.id===id); if(!acc.payouts)acc.payouts=[]; acc.payouts.push({amount:parseFloat(amt)}); save(); renderPF(); } }
         window.onload = renderHome;
     </script>
