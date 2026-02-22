@@ -104,7 +104,7 @@
                         <span class="text-[10px] font-bold" style="color: #ff0000;">※ 手機板跟電腦版互相不會更新因為是本地端儲存。</span>
                     </div>
                 </div>
-                <button onclick="document.getElementById('modal-add-strategy').showModal()" class="btn btn-silver btn-wide shadow-2xl font-black text-lg">+ 建立新交易策略系統</button>
+                <button onclick="openAddStrategyModal()" class="btn btn-silver btn-wide shadow-2xl font-black text-lg">+ 建立新交易策略系統</button>
             </div>
             <div id="strategy-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </section>
@@ -188,7 +188,7 @@
                                 <input type="number" id="q-rr" step="0.1" class="input input-sm input-bordered w-full font-black text-center bg-base-100" placeholder="倍數">
                             </div>
                             <div class="bg-base-200 p-2 rounded-lg border border-base-content/5">
-                                <label class="label py-0 mb-1"><span class="label-text text-[10px] font-bold text-primary">實際金額 (選填)</span></label>
+                                <label class="label py-0 mb-1"><span class="label-text text-[10px] font-bold text-primary">實際盈虧 (獲利輸入正數/虧損負數)</span></label>
                                 <input type="number" id="q-amt" class="input input-sm input-bordered w-full font-black text-center bg-base-100" placeholder="手動輸入 $">
                             </div>
                         </div>
@@ -245,13 +245,25 @@
             <h3 class="font-black text-xl text-primary uppercase italic tracking-wider">初始化策略工作區 (Initialize)</h3>
             <div class="py-6 space-y-5">
                 <div class="form-control"><label class="label"><span class="label-text font-bold opacity-70">1. 策略名稱 / 交易品種</span></label><input type="text" id="ns-name" placeholder="Apex 50k NQ" class="input input-bordered w-full bg-base-200"></div>
-                <div class="form-control"><label class="label"><span class="label-text font-bold opacity-70">2. 自定義檢核規則 (以逗號隔開)</span></label><textarea id="ns-checklist" class="textarea textarea-bordered w-full bg-base-200 h-20"></textarea></div>
+                
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-bold opacity-70">2. 自定義檢核規則</span></label>
+                    <div class="join w-full">
+                        <input type="text" id="ns-rule-input" placeholder="例如：15M 結構順勢" class="input input-bordered join-item w-full bg-base-200">
+                        <button onclick="addRuleToList()" class="btn btn-purple join-item font-bold">+ 新增條件</button>
+                    </div>
+                    <div id="ns-rule-list" class="mt-3 flex flex-wrap gap-2"></div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-4">
                     <div class="form-control"><label class="label"><span class="label-text text-xs font-bold text-accent">3. 起始本金 ($)</span></label><input type="number" id="ns-cap" value="10000" class="input input-bordered bg-base-200"></div>
                     <div class="form-control"><label class="label"><span class="label-text text-xs font-bold text-primary">4. 預設 RR</span></label><input type="number" id="ns-rr" value="2.0" step="0.1" class="input input-bordered bg-base-200"></div>
                 </div>
             </div>
-            <div class="modal-action flex gap-2"><form method="dialog" class="flex gap-2 w-full"><button class="btn btn-cancel flex-1">取消</button><button onclick="createStrategy()" class="btn btn-silver flex-[2] font-black">創建交易系統</button></form></div>
+            <div class="modal-action flex gap-2">
+                <button onclick="document.getElementById('modal-add-strategy').close()" class="btn btn-cancel flex-1">取消</button>
+                <button onclick="createStrategy()" class="btn btn-silver flex-[2] font-black">創建交易系統</button>
+            </div>
         </div>
     </dialog>
 
@@ -274,6 +286,7 @@
     <script>
         let db = JSON.parse(localStorage.getItem('ck_trading_v5')) || { workspaces: [], pfAccounts: [] };
         let currentWorkspaceId = null; let chart = null;
+        let tempChecklist = []; // 暫存創建策略時的規則
 
         function toggleDeviceView() {
             const isMobile = document.body.classList.toggle('mobile-view');
@@ -315,11 +328,51 @@
             const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", `CK_Backup.json`); dl.click();
         }
 
+        // --- 規則列表處理函數 ---
+        function openAddStrategyModal() {
+            tempChecklist = [];
+            document.getElementById('ns-rule-list').innerHTML = '';
+            document.getElementById('ns-rule-input').value = '';
+            document.getElementById('modal-add-strategy').showModal();
+        }
+
+        function addRuleToList() {
+            const input = document.getElementById('ns-rule-input');
+            const rule = input.value.trim();
+            if (rule && !tempChecklist.includes(rule)) {
+                tempChecklist.push(rule);
+                renderTempRules();
+                input.value = '';
+            }
+        }
+
+        function removeTempRule(rule) {
+            tempChecklist = tempChecklist.filter(r => r !== rule);
+            renderTempRules();
+        }
+
+        function renderTempRules() {
+            const container = document.getElementById('ns-rule-list');
+            container.innerHTML = tempChecklist.map(r => `
+                <div class="badge badge-primary gap-2 p-3 font-bold">
+                    <svg onclick="removeTempRule('${r}')" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-4 h-4 stroke-current cursor-pointer"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    ${r}
+                </div>
+            `).join('');
+        }
+
         function createStrategy() {
             const name = document.getElementById('ns-name').value;
-            const checklistRaw = document.getElementById('ns-checklist').value; if(!name) return;
-            const checklist = checklistRaw ? checklistRaw.split(',').map(s => s.trim()).filter(s => s !== "") : [];
-            const ws = { id: Date.now(), name, initialCapital: parseFloat(document.getElementById('ns-cap').value)||10000, defaultRR: parseFloat(document.getElementById('ns-rr').value)||2.0, riskPerTrade: 100, checklist, trades: [] };
+            if(!name) return;
+            const ws = { 
+                id: Date.now(), 
+                name, 
+                initialCapital: parseFloat(document.getElementById('ns-cap').value)||10000, 
+                defaultRR: parseFloat(document.getElementById('ns-rr').value)||2.0, 
+                riskPerTrade: 100, 
+                checklist: [...tempChecklist], 
+                trades: [] 
+            };
             db.workspaces.push(ws); save(); renderHome();
             document.getElementById('modal-add-strategy').close();
         }
