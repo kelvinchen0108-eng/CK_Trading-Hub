@@ -3,42 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CK Trading Hub v5.8 | Logic Hints Restored</title>
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <title>CK Trading Hub v6.0</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --p: 191 100% 60%; 
-            --s: 280 100% 70%; 
-            --a: 150 100% 60%; 
-        }
         .page-content { display: none; }
         .page-content.active { display: block; }
-        
+
         .logic-hint { position: relative; cursor: help; }
         .logic-hint:hover .hint-text { display: block; }
-        .hint-text { 
-            display: none; 
-            position: absolute; 
-            z-index: 100; 
-            width: 240px; 
-            background-color: #1e293b; /* 固定深色背景確保讀取 */
-            color: #f8fafc; 
-            padding: 12px; 
-            border-radius: 8px; 
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(128,128,128,0.2);
-            top: 110%;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 11px;
-            line-height: 1.5;
+        .hint-text {
+            display: none; position: absolute; z-index: 100; width: 240px;
+            background-color: #1e293b; color: #f8fafc; padding: 12px;
+            border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+            border: 1px solid rgba(128,128,128,0.2); top: 110%; left: 50%;
+            transform: translateX(-50%); font-size: 11px; line-height: 1.5; pointer-events: none;
         }
-        
-        .btn-purple { background-color: #8b5cf6 !important; color: #ffffff !important; border: none; }
-        .btn-purple:hover { background-color: #7c3aed !important; }
 
+        .btn-purple { background-color: #8b5cf6 !important; color: #fff !important; border: none; }
+        .btn-purple:hover { background-color: #7c3aed !important; }
         .btn-silver { background-color: #cbd5e1; color: #0f172a; border: none; }
         .btn-silver:hover { background-color: #94a3b8; }
         .btn-cancel { background-color: #475569; color: white; border: none; }
@@ -46,450 +30,972 @@
         .rule-check:checked + span { color: #4ade80; font-weight: bold; }
         .rule-check { width: 1.25rem; height: 1.25rem; }
 
+        /* Image drop zone */
+        #img-drop-zone {
+            border: 2px dashed rgba(0,215,255,0.3);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+        }
+        #img-drop-zone.drag-over { border-color: #00d7ff; background: rgba(0,215,255,0.05); }
+        #img-drop-zone.has-image { border-color: #4ade80; background: rgba(74,222,128,0.05); }
+        #img-preview { max-width: 100%; max-height: 120px; border-radius: 8px; object-fit: contain; display: none; }
+
+        /* Lightbox */
+        #lightbox {
+            display: none; position: fixed; inset: 0; z-index: 9999;
+            background: rgba(0,0,0,0.9); align-items: center; justify-content: center;
+        }
+        #lightbox.open { display: flex; }
+        #lightbox img { max-width: 92vw; max-height: 90vh; border-radius: 12px; box-shadow: 0 0 60px rgba(0,0,0,0.8); }
+        #lightbox-close {
+            position: absolute; top: 20px; right: 28px;
+            font-size: 2.5rem; color: white; cursor: pointer; line-height: 1;
+            opacity: 0.7; transition: opacity 0.2s;
+        }
+        #lightbox-close:hover { opacity: 1; }
+
+        /* Mobile */
         body.mobile-view .max-w-7xl { max-width: 480px; margin: 0 auto; }
-        body.mobile-view .navbar { flex-wrap: wrap; }
-        body.mobile-view .navbar-start { width: 100%; justify-content: space-between; }
-        body.mobile-view .navbar-end { width: 100%; justify-content: center; margin-top: 0.5rem; gap: 4px; }
         body.mobile-view .grid-cols-7, body.mobile-view .grid-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
         body.mobile-view .stat-value { font-size: 1.1rem !important; }
         body.mobile-view .stat-title { font-size: 9px !important; }
         body.mobile-view .lg\:col-span-2 { grid-column: span 1 / span 1; }
-        body.mobile-view .join-item { font-size: 0.6rem; padding: 0 0.25rem; }
         body.mobile-view #breadcrumb { display: none; }
 
-        #view-toggle-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 999;
-            box-shadow: 0 4px 14px 0 rgba(0,0,0,0.5);
-        }
+        #view-toggle-btn { position: fixed; bottom: 20px; right: 20px; z-index: 998; box-shadow: 0 4px 14px rgba(0,0,0,0.5); }
+
+        .thumb-img { width: 36px; height: 36px; object-fit: cover; border-radius: 6px; cursor: pointer; transition: transform 0.15s; border: 1px solid rgba(255,255,255,0.1); }
+        .thumb-img:hover { transform: scale(1.1); }
+
+        /* Toast */
+        #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 9000; display: none; }
     </style>
 </head>
 <body class="min-h-screen bg-base-300 text-base-content font-sans transition-colors duration-300 mobile-view">
 
-    <button id="view-toggle-btn" onclick="toggleDeviceView()" class="btn btn-circle btn-primary btn-lg">
-        <span id="toggle-icon"><div class="flex flex-col items-center leading-none" style="color: #00d7ff;"><span class="text-xl">📱</span><span class="text-[10px] font-bold mt-1">手機版</span></div></span>
-    </button>
+<!-- Lightbox -->
+<div id="lightbox" onclick="closeLightbox()">
+    <span id="lightbox-close" onclick="closeLightbox()">×</span>
+    <img id="lightbox-img" src="" alt="trade screenshot">
+</div>
 
-    <div class="navbar bg-base-100 shadow-2xl px-6 sticky top-0 z-50 border-b border-base-content/5 text-base-content">
-        <div class="flex-1">
-            <button class="btn btn-ghost text-xl font-black text-primary" onclick="goToHome()">CK Trading Hub<span class="text-xs font-normal opacity-70 italic">CK_Trading</span></button>
-            <div id="breadcrumb" class="text-sm breadcrumbs ml-4 hidden">
-                <ul>
-                    <li><a onclick="goToHome()" class="hover:text-primary font-bold">Workspace</a></li>
-                    <li id="current-nav-name" class="font-bold">Strategy Detail</li>
-                </ul>
-            </div>
-        </div>
-        <div class="flex-none gap-2">
-            <button onclick="toggleTheme()" class="btn btn-xs btn-ghost mr-2 border border-base-content/20">🌓 切換主題</button>
-            <div class="join">
-                <button onclick="document.getElementById('import-input').click()" class="btn btn-xs btn-outline btn-accent join-item">匯入</button>
-                <button onclick="exportDataJSON()" class="btn btn-xs btn-outline btn-accent join-item">匯出備份</button>
-            </div>
-            <input type="file" id="import-input" class="hidden" accept=".json, .txt" onchange="handleImport(event)">
-            <button onclick="showPage('page-propfirm')" class="btn btn-sm btn-purple font-bold shadow-lg">Prop Firm 管理中心</button>
+<!-- Toast -->
+<div id="toast"><div class="alert alert-success shadow-lg text-sm font-bold" id="toast-msg">✓ 已儲存</div></div>
+
+<!-- View Toggle -->
+<button id="view-toggle-btn" onclick="toggleDeviceView()" class="btn btn-circle btn-primary btn-lg">
+    <span id="toggle-icon"><div class="flex flex-col items-center leading-none" style="color:#00d7ff"><span class="text-xl">📱</span><span class="text-[10px] font-bold mt-1">手機版</span></div></span>
+</button>
+
+<!-- Navbar -->
+<div class="navbar bg-base-100 shadow-2xl px-6 sticky top-0 z-50 border-b border-base-content/5">
+    <div class="flex-1">
+        <button class="btn btn-ghost text-xl font-black text-primary" onclick="goToHome()">CK Trading Hub<span class="text-xs font-normal opacity-70 italic ml-1">v6.0</span></button>
+        <div id="breadcrumb" class="text-sm breadcrumbs ml-4 hidden">
+            <ul>
+                <li><a onclick="goToHome()" class="hover:text-primary font-bold">Workspace</a></li>
+                <li id="current-nav-name" class="font-bold">Detail</li>
+            </ul>
         </div>
     </div>
-
-    <div class="p-4 max-w-7xl mx-auto text-base-content">
-        <section id="page-home" class="page-content active">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6 bg-base-100 p-6 rounded-3xl border border-base-content/5 shadow-xl">
-                <div class="space-y-2">
-                    <h2 class="text-4xl font-black tracking-tighter uppercase">策略工作區</h2>
-                    <div class="text-[11px] leading-relaxed text-primary font-medium max-w-2xl">
-                        使用指南：1. 建立策略並自定義檢核項 ➔ 2. 進入詳情進行極速錄入 ➔ 3. 透過數據分析優化系統 EV。<br>
-                        <span class="text-accent">⚠️ 本系統資料儲存於本地瀏覽器，建議定期使用『導出資料』功能備份 CSV，以防更換設備或清理快取導致紀錄遺失。</span><br>
-                        <span class="text-[10px] font-bold" style="color: #ff0000;">※ 手機板跟電腦版互相不會更新因為是本地端儲存。</span>
-                    </div>
-                </div>
-                <button onclick="openAddStrategyModal()" class="btn btn-silver btn-wide shadow-2xl font-black text-lg">+ 建立新交易策略系統</button>
-            </div>
-            <div id="strategy-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-        </section>
-
-        <section id="page-detail" class="page-content space-y-6">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4 bg-base-100 p-4 rounded-box shadow border border-base-content/5">
-                <div class="flex items-center gap-4">
-                    <select id="filter-month" class="select select-sm select-bordered font-bold bg-base-200" onchange="updateDetail()">
-                        <option value="all">所有月份數據</option>
-                    </select>
-                    <div class="join ml-2">
-                        <button onclick="exportStrategyCSV(true)" class="btn btn-xs btn-outline btn-primary join-item">匯出當月 CSV</button>
-                        <button onclick="exportStrategyCSV(false)" class="btn btn-xs btn-outline btn-primary join-item">匯出全部 CSV</button>
-                    </div>
-                </div>
-                <button class="btn btn-ghost btn-sm opacity-60 font-bold" onclick="goToHome()">← 返回列表</button>
-            </div>
-
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-                <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-success">
-                    <div class="stat-title text-[10px] uppercase font-bold opacity-70">Balance</div>
-                    <div id="d-balance" class="stat-value text-lg md:text-xl font-mono">$0</div>
-                </div>
-                <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-primary">
-                    <div class="stat-title text-[10px] uppercase font-bold opacity-70">Win Rate</div>
-                    <div id="d-winrate" class="stat-value text-lg md:text-xl text-primary font-mono">0%</div>
-                </div>
-                <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-accent logic-hint">
-                    <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70">Avg RR <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
-                    <div id="d-avgrr" class="stat-value text-lg md:text-xl text-accent font-mono">0.0</div>
-                    <div class="hint-text">
-                        <strong>平均風險報酬比 (Avg RR)</strong><br>
-                        計算方式：獲利交易的總 RR / 獲利交易次數。<br>
-                        衡量系統在獲利時，平均每筆單能賺取多少倍的風險資金。
-                    </div>
-                </div>
-                <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-warning logic-hint">
-                    <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70">EV <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
-                    <div id="d-ev" class="stat-value text-lg md:text-xl text-warning font-mono">0</div>
-                    <div class="hint-text">
-                        <strong>預期值 (Expected Value)</strong><br>
-                        計算方式：$(Win\% \times AvgWin) - (Loss\% \times AvgLoss)$<br>
-                        代表長期下來，每一筆交易平均預計能帶來的利潤（以金額表示）。
-                    </div>
-                </div>
-                <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-error logic-hint">
-                    <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70">MDD <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
-                    <div id="d-mdd" class="stat-value text-lg md:text-xl text-error font-mono">0%</div>
-                    <div class="hint-text">
-                        <strong>最大回撤 (Max Drawdown)</strong><br>
-                        計算方式：從帳戶最高點跌至最低點的最大百分比。<br>
-                        反映系統在最糟糕的情況下，本金可能蒙受的最大壓力。
-                    </div>
-                </div>
-                <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-base-content/20 logic-hint">
-                    <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70">ROI <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
-                    <div id="d-roi" class="stat-value text-lg md:text-xl font-mono">0%</div>
-                    <div class="hint-text">
-                        <strong>投資報酬率 (ROI)</strong><br>
-                        計算方式：$(總盈虧 / 起始本金) \times 100\%$<br>
-                        衡量資金增長的百分比效率。
-                    </div>
-                </div>
-                <div class="stat bg-base-100 shadow rounded-box p-3">
-                    <div class="stat-title text-[10px] uppercase font-bold opacity-70">Samples</div>
-                    <div id="d-count" class="stat-value text-lg md:text-xl font-mono">0</div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="card bg-base-100 shadow-xl p-6 space-y-4 border border-base-content/5">
-                    <h3 class="font-black text-lg text-primary uppercase border-b border-primary/20 pb-2">Quick Log 錄入</h3>
-                    <div class="space-y-4">
-                        <div class="form-control">
-                            <label class="label py-1"><span class="label-text-alt font-bold opacity-70 italic">交易日期時間</span></label>
-                            <input type="datetime-local" id="q-date" class="input input-sm input-bordered bg-base-200 w-full font-mono">
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="bg-base-200 p-2 rounded-lg border border-base-content/5">
-                                <label class="label py-0 mb-1"><span class="label-text text-[10px] font-bold text-accent">RR 設定</span></label>
-                                <input type="number" id="q-rr" step="0.1" class="input input-sm input-bordered w-full font-black text-center bg-base-100" placeholder="倍數">
-                            </div>
-                            <div class="bg-base-200 p-2 rounded-lg border border-base-content/5">
-                                <label class="label py-0 mb-1"><span class="label-text text-[10px] font-bold text-primary">實際盈虧 (獲利輸入正數/虧損負數)</span></label>
-                                <input type="number" id="q-amt" class="input input-sm input-bordered w-full font-black text-center bg-base-100" placeholder="手動輸入 $">
-                            </div>
-                        </div>
-                        <div id="checklist-container" class="bg-base-300 p-3 rounded-lg text-[11px] space-y-2 shadow-inner">
-                            <p class="font-black text-primary italic uppercase tracking-wider border-b border-base-content/10 mb-2">進場規則檢核 (Rules)</p>
-                            <div id="checklist-items-container" class="space-y-3"></div>
-                        </div>
-                        <div class="grid grid-cols-3 gap-2">
-                            <button onclick="quickLog(1)" class="btn btn-success btn-md shadow-xl font-black">WIN</button>
-                            <button onclick="quickLog(2)" class="btn btn-warning btn-md shadow-xl font-black">BE</button>
-                            <button onclick="quickLog(0)" class="btn btn-error btn-md shadow-xl font-black">LOSS</button>
-                        </div>
-                        <textarea id="q-note" class="textarea textarea-bordered textarea-xs bg-base-200 w-full mt-2" placeholder="心得..."></textarea>
-                    </div>
-                </div>
-                <div class="lg:col-span-2 card bg-base-100 shadow-xl p-6 border border-base-content/5">
-                    <canvas id="detailChart" height="130"></canvas>
-                </div>
-            </div>
-
-            <div class="card bg-base-100 shadow-xl overflow-x-auto border border-base-content/5">
-                <table class="table table-zebra w-full text-xs">
-                    <thead><tr class="bg-base-200"><th>#</th><th>Date Time</th><th>Action</th><th>RR</th><th>PnL ($)</th><th>Balance</th><th>Rules / Notes</th><th></th></tr></thead>
-                    <tbody id="detail-table-body" class="font-mono"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="page-propfirm" class="page-content space-y-6">
-            <div class="flex justify-between items-center mb-6">
-                <div class="flex items-center gap-4">
-                    <button class="btn btn-circle btn-outline btn-sm opacity-60" onclick="goToHome()">←</button>
-                    <h2 class="text-3xl font-black italic underline decoration-secondary decoration-4">Prop Firm Dashboard</h2>
-                </div>
-                <button onclick="document.getElementById('modal-add-pf').showModal()" class="btn btn-purple shadow-lg font-bold">+ 新增 PF 帳號</button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 text-center">
-                <div class="bg-base-100 p-4 rounded-box shadow border-b-4 border-error"><p class="text-[10px] font-bold uppercase opacity-70">總成本</p><p id="pf-total-cost" class="text-2xl font-black font-mono">$0</p></div>
-                <div class="bg-base-100 p-4 rounded-box shadow border-b-4 border-success"><p class="text-[10px] font-bold uppercase opacity-70">總出金</p><p id="pf-total-payout" class="text-2xl font-black font-mono">$0</p></div>
-                <div class="bg-base-100 p-4 rounded-box shadow border-b-4 border-primary"><p class="text-[10px] font-bold uppercase opacity-70">帳號通過率</p><p id="pf-pass-rate" class="text-2xl font-black font-mono">0%</p></div>
-                <div class="bg-base-100 p-4 rounded-box shadow border-b-4 border-accent"><p class="text-[10px] font-bold uppercase opacity-70">淨收益 (Net)</p><p id="pf-net-pnl" class="text-2xl font-black text-accent font-mono">0</p></div>
-            </div>
-            <div class="card bg-base-100 shadow-xl overflow-x-auto border border-base-content/5">
-                <table class="table w-full">
-                    <thead><tr class="bg-base-200"><th>公司 / 帳號</th><th>成本</th><th>狀態</th><th>累計出金</th><th>操作</th></tr></thead>
-                    <tbody id="pf-table-body" class="text-xs"></tbody>
-                </table>
-            </div>
-        </section>
+    <div class="flex-none gap-2">
+        <button onclick="toggleTheme()" class="btn btn-xs btn-ghost border border-base-content/20">🌓 切換主題</button>
+        <div class="join">
+            <button onclick="document.getElementById('import-input').click()" class="btn btn-xs btn-outline btn-accent join-item">匯入</button>
+            <button onclick="exportDataJSON()" class="btn btn-xs btn-outline btn-accent join-item">匯出備份</button>
+        </div>
+        <input type="file" id="import-input" class="hidden" accept=".json,.txt" onchange="handleImport(event)">
+        <button onclick="showPage('page-propfirm')" class="btn btn-sm btn-purple font-bold shadow-lg">Prop Firm 管理中心</button>
     </div>
+</div>
 
-    <dialog id="modal-add-strategy" class="modal">
-        <div class="modal-box bg-base-100 border-t-4 border-primary shadow-2xl text-base-content">
-            <h3 class="font-black text-xl text-primary uppercase italic tracking-wider">初始化策略工作區 (Initialize)</h3>
-            <div class="py-6 space-y-5">
-                <div class="form-control"><label class="label"><span class="label-text font-bold opacity-70">1. 策略名稱 / 交易品種</span></label><input type="text" id="ns-name" placeholder="Apex 50k NQ" class="input input-bordered w-full bg-base-200"></div>
-                
+<div class="p-4 max-w-7xl mx-auto">
+
+    <!-- HOME -->
+    <section id="page-home" class="page-content active">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6 bg-base-100 p-6 rounded-3xl border border-base-content/5 shadow-xl">
+            <div class="space-y-2">
+                <h2 class="text-4xl font-black tracking-tighter uppercase">策略工作區</h2>
+                <div class="text-[11px] leading-relaxed text-primary font-medium max-w-2xl">
+                    使用指南：1. 建立策略並自定義檢核項 ➔ 2. 進入詳情進行極速錄入 ➔ 3. 透過數據分析優化系統 EV。<br>
+                    <span class="text-accent">⚠️ 資料儲存於本地瀏覽器，建議定期匯出 JSON 備份，圖片儲存於 IndexedDB。</span><br>
+                    <span class="text-[10px] font-bold text-error">※ 手機版與電腦版各自獨立，資料不會同步。</span>
+                </div>
+            </div>
+            <button onclick="openAddStrategyModal()" class="btn btn-silver btn-wide shadow-2xl font-black text-lg">+ 建立新交易策略系統</button>
+        </div>
+        <div id="strategy-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </section>
+
+    <!-- DETAIL -->
+    <section id="page-detail" class="page-content space-y-6">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4 bg-base-100 p-4 rounded-box shadow border border-base-content/5">
+            <div class="flex items-center gap-4">
+                <select id="filter-month" class="select select-sm select-bordered font-bold bg-base-200" onchange="updateDetail()">
+                    <option value="all">所有月份數據</option>
+                </select>
+                <div class="join ml-2">
+                    <button onclick="exportStrategyCSV(true)" class="btn btn-xs btn-outline btn-primary join-item">匯出當月 CSV</button>
+                    <button onclick="exportStrategyCSV(false)" class="btn btn-xs btn-outline btn-primary join-item">匯出全部 CSV</button>
+                </div>
+            </div>
+            <button class="btn btn-ghost btn-sm opacity-60 font-bold" onclick="goToHome()">← 返回列表</button>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-success">
+                <div class="stat-title text-[10px] uppercase font-bold opacity-70">Balance</div>
+                <div id="d-balance" class="stat-value text-lg md:text-xl font-mono">$0</div>
+            </div>
+            <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-primary">
+                <div class="stat-title text-[10px] uppercase font-bold opacity-70">Win Rate</div>
+                <div id="d-winrate" class="stat-value text-lg md:text-xl text-primary font-mono">0%</div>
+            </div>
+            <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-accent logic-hint">
+                <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70">Avg RR <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
+                <div id="d-avgrr" class="stat-value text-lg md:text-xl text-accent font-mono">0.0</div>
+                <div class="hint-text"><strong>平均風險報酬比</strong><br>獲利交易的總 RR ÷ 獲利交易次數。衡量每筆勝利交易平均拿到多少倍風險報酬。</div>
+            </div>
+            <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-warning logic-hint">
+                <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70">EV <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
+                <div id="d-ev" class="stat-value text-lg md:text-xl text-warning font-mono">0</div>
+                <div class="hint-text"><strong>預期值 (Expected Value)</strong><br>(勝率 × 平均獲利) − (敗率 × 平均虧損)<br>代表長期每筆交易平均預期帶來的金額。</div>
+            </div>
+            <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-error logic-hint">
+                <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70">MDD <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
+                <div id="d-mdd" class="stat-value text-lg md:text-xl text-error font-mono">0%</div>
+                <div class="hint-text"><strong>最大回撤 (Max Drawdown)</strong><br>帳戶從最高點跌至最低點的最大百分比，反映最糟糕情況下的資金壓力。</div>
+            </div>
+            <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-base-content/20 logic-hint">
+                <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70">ROI <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
+                <div id="d-roi" class="stat-value text-lg md:text-xl font-mono">0%</div>
+                <div class="hint-text"><strong>投資報酬率 (ROI)</strong><br>(總盈虧 ÷ 起始本金) × 100%</div>
+            </div>
+            <div class="stat bg-base-100 shadow rounded-box p-3">
+                <div class="stat-title text-[10px] uppercase font-bold opacity-70">Samples</div>
+                <div id="d-count" class="stat-value text-lg md:text-xl font-mono">0</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Quick Log -->
+            <div class="card bg-base-100 shadow-xl p-6 space-y-4 border border-base-content/5">
+                <h3 class="font-black text-lg text-primary uppercase border-b border-primary/20 pb-2">Quick Log 錄入</h3>
+                <div class="space-y-3">
+                    <div class="form-control">
+                        <label class="label py-1"><span class="label-text-alt font-bold opacity-70">交易日期時間</span></label>
+                        <input type="datetime-local" id="q-date" class="input input-sm input-bordered bg-base-200 w-full font-mono">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-base-200 p-2 rounded-lg border border-base-content/5">
+                            <label class="label py-0 mb-1"><span class="label-text text-[10px] font-bold text-accent">RR 設定</span></label>
+                            <input type="number" id="q-rr" step="0.1" class="input input-sm input-bordered w-full font-black text-center bg-base-100" placeholder="倍數">
+                        </div>
+                        <div class="bg-base-200 p-2 rounded-lg border border-base-content/5">
+                            <label class="label py-0 mb-1"><span class="label-text text-[10px] font-bold text-primary">實際盈虧 ($)</span></label>
+                            <input type="number" id="q-amt" class="input input-sm input-bordered w-full font-black text-center bg-base-100" placeholder="正數獲利/負數虧損">
+                        </div>
+                    </div>
+
+                    <!-- Checklist -->
+                    <div id="checklist-container" class="bg-base-300 p-3 rounded-lg text-[11px] space-y-2 shadow-inner">
+                        <p class="font-black text-primary italic uppercase tracking-wider border-b border-base-content/10 mb-2">進場規則檢核 (Rules)</p>
+                        <div id="checklist-items-container" class="space-y-3"></div>
+                    </div>
+
+                    <!-- Image Drop Zone -->
+                    <div>
+                        <label class="label py-1"><span class="label-text-alt font-bold opacity-70">📸 截圖附件 (可貼上/拖曳/點擊)</span></label>
+                        <div id="img-drop-zone" onclick="document.getElementById('img-file-input').click()">
+                            <img id="img-preview" src="" alt="preview">
+                            <div id="img-placeholder" class="text-[11px] opacity-40 pointer-events-none">
+                                <div class="text-2xl mb-1">🖼️</div>
+                                <div>Ctrl+V 貼上截圖 · 拖曳圖片至此 · 點擊選取</div>
+                            </div>
+                            <button id="img-clear-btn" onclick="clearPendingImage(event)" class="btn btn-xs btn-error absolute top-2 right-2" style="display:none">✕ 清除</button>
+                        </div>
+                        <input type="file" id="img-file-input" class="hidden" accept="image/*" onchange="handleImageFile(event)">
+                    </div>
+
+                    <textarea id="q-note" class="textarea textarea-bordered textarea-xs bg-base-200 w-full" rows="2" placeholder="心得筆記..."></textarea>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="quickLog(1)" class="btn btn-success btn-md shadow-xl font-black">WIN</button>
+                        <button onclick="quickLog(2)" class="btn btn-warning btn-md shadow-xl font-black">BE</button>
+                        <button onclick="quickLog(0)" class="btn btn-error btn-md shadow-xl font-black">LOSS</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="lg:col-span-2 card bg-base-100 shadow-xl p-6 border border-base-content/5">
+                <canvas id="detailChart" height="130"></canvas>
+            </div>
+        </div>
+
+        <!-- Trade Table -->
+        <div class="card bg-base-100 shadow-xl overflow-x-auto border border-base-content/5">
+            <table class="table table-zebra w-full text-xs">
+                <thead>
+                    <tr class="bg-base-200">
+                        <th>#</th><th>Date Time</th><th>Action</th><th>RR</th>
+                        <th>PnL ($)</th><th>Balance</th><th>Rules</th><th>Notes</th><th>截圖</th><th></th>
+                    </tr>
+                </thead>
+                <tbody id="detail-table-body" class="font-mono"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- PROP FIRM -->
+    <section id="page-propfirm" class="page-content space-y-6">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-4">
+                <button class="btn btn-circle btn-outline btn-sm opacity-60" onclick="goToHome()">←</button>
+                <h2 class="text-3xl font-black italic underline decoration-secondary decoration-4">Prop Firm Dashboard</h2>
+            </div>
+            <button onclick="document.getElementById('modal-add-pf').showModal()" class="btn btn-purple shadow-lg font-bold">+ 新增 PF 帳號</button>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 text-center">
+            <div class="bg-base-100 p-4 rounded-box shadow border-b-4 border-error"><p class="text-[10px] font-bold uppercase opacity-70">總成本</p><p id="pf-total-cost" class="text-2xl font-black font-mono">$0</p></div>
+            <div class="bg-base-100 p-4 rounded-box shadow border-b-4 border-success"><p class="text-[10px] font-bold uppercase opacity-70">總出金</p><p id="pf-total-payout" class="text-2xl font-black font-mono">$0</p></div>
+            <div class="bg-base-100 p-4 rounded-box shadow border-b-4 border-primary"><p class="text-[10px] font-bold uppercase opacity-70">帳號通過率</p><p id="pf-pass-rate" class="text-2xl font-black font-mono">0%</p></div>
+            <div class="bg-base-100 p-4 rounded-box shadow border-b-4 border-accent"><p class="text-[10px] font-bold uppercase opacity-70">淨收益 (Net)</p><p id="pf-net-pnl" class="text-2xl font-black text-accent font-mono">$0</p></div>
+        </div>
+        <div class="card bg-base-100 shadow-xl overflow-x-auto border border-base-content/5">
+            <table class="table w-full">
+                <thead><tr class="bg-base-200"><th>公司 / 帳號</th><th>成本 ($)</th><th>狀態</th><th>累計出金</th><th>操作</th></tr></thead>
+                <tbody id="pf-table-body" class="text-xs"></tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<!-- Modal: Add Strategy -->
+<dialog id="modal-add-strategy" class="modal">
+    <div class="modal-box bg-base-100 border-t-4 border-primary shadow-2xl">
+        <h3 class="font-black text-xl text-primary uppercase italic tracking-wider">初始化策略工作區</h3>
+        <div class="py-6 space-y-5">
+            <div class="form-control">
+                <label class="label"><span class="label-text font-bold opacity-70">1. 策略名稱 / 交易品種</span></label>
+                <input type="text" id="ns-name" placeholder="Apex 50k NQ" class="input input-bordered w-full bg-base-200">
+            </div>
+            <div class="form-control">
+                <label class="label"><span class="label-text font-bold opacity-70">2. 自定義檢核規則</span></label>
+                <div class="join w-full">
+                    <input type="text" id="ns-rule-input" placeholder="例如：15M 結構順勢" class="input input-bordered join-item w-full bg-base-200"
+                        onkeydown="if(event.key==='Enter') addRuleToList()">
+                    <button onclick="addRuleToList()" class="btn btn-purple join-item font-bold">+ 新增</button>
+                </div>
+                <div id="ns-rule-list" class="mt-3 flex flex-wrap gap-2"></div>
+            </div>
+            <div class="grid grid-cols-3 gap-4">
                 <div class="form-control">
-                    <label class="label"><span class="label-text font-bold opacity-70">2. 自定義檢核規則</span></label>
-                    <div class="join w-full">
-                        <input type="text" id="ns-rule-input" placeholder="例如：15M 結構順勢" class="input input-bordered join-item w-full bg-base-200">
-                        <button onclick="addRuleToList()" class="btn btn-purple join-item font-bold">+ 新增條件</button>
-                    </div>
-                    <div id="ns-rule-list" class="mt-3 flex flex-wrap gap-2"></div>
+                    <label class="label"><span class="label-text text-xs font-bold text-accent">3. 起始本金 ($)</span></label>
+                    <input type="number" id="ns-cap" value="10000" class="input input-bordered bg-base-200">
                 </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="form-control"><label class="label"><span class="label-text text-xs font-bold text-accent">3. 起始本金 ($)</span></label><input type="number" id="ns-cap" value="10000" class="input input-bordered bg-base-200"></div>
-                    <div class="form-control"><label class="label"><span class="label-text text-xs font-bold text-primary">4. 預設 RR</span></label><input type="number" id="ns-rr" value="2.0" step="0.1" class="input input-bordered bg-base-200"></div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text text-xs font-bold text-primary">4. 預設 RR</span></label>
+                    <input type="number" id="ns-rr" value="2.0" step="0.1" class="input input-bordered bg-base-200">
                 </div>
-            </div>
-            <div class="modal-action flex gap-2">
-                <button onclick="document.getElementById('modal-add-strategy').close()" class="btn btn-cancel flex-1">取消</button>
-                <button onclick="createStrategy()" class="btn btn-silver flex-[2] font-black">創建交易系統</button>
+                <div class="form-control">
+                    <label class="label"><span class="label-text text-xs font-bold text-warning">5. 每筆風險 ($)</span></label>
+                    <input type="number" id="ns-risk" value="100" class="input input-bordered bg-base-200">
+                </div>
             </div>
         </div>
-    </dialog>
+        <div class="modal-action flex gap-2">
+            <button onclick="document.getElementById('modal-add-strategy').close()" class="btn btn-cancel flex-1">取消</button>
+            <button onclick="createStrategy()" class="btn btn-silver flex-[2] font-black">創建交易系統</button>
+        </div>
+    </div>
+</dialog>
 
-    <dialog id="modal-add-pf" class="modal">
-        <div class="modal-box bg-base-100 border-t-4 border-secondary shadow-2xl text-base-content">
-            <h3 class="font-black text-xl text-secondary">新增 Prop Firm 帳號</h3>
-            <div class="py-6 space-y-5">
-                <div class="form-control"><label class="label"><span class="label-text font-bold">自營公司名稱</span></label><input type="text" id="npf-company" placeholder="Topstep" class="input input-bordered bg-base-200"></div>
-                <div class="form-control"><label class="label"><span class="label-text font-bold">報名成本 ($)</span></label><input type="number" id="npf-cost" value="49" class="input input-bordered bg-base-200"></div>
+<!-- Modal: Add PF -->
+<dialog id="modal-add-pf" class="modal">
+    <div class="modal-box bg-base-100 border-t-4 border-secondary shadow-2xl">
+        <h3 class="font-black text-xl text-secondary">新增 Prop Firm 帳號</h3>
+        <div class="py-6 space-y-5">
+            <div class="form-control">
+                <label class="label"><span class="label-text font-bold">自營公司名稱</span></label>
+                <input type="text" id="npf-company" placeholder="Topstep" class="input input-bordered bg-base-200">
             </div>
-            <div class="modal-action flex gap-2">
-                <form method="dialog" class="flex gap-2 w-full">
-                    <button class="btn btn-cancel flex-1">取消</button>
-                    <button onclick="addPFAccount()" class="btn btn-purple flex-[2]">確認新增</button>
-                </form>
+            <div class="form-control">
+                <label class="label"><span class="label-text font-bold">報名成本 ($)</span></label>
+                <input type="number" id="npf-cost" value="49" class="input input-bordered bg-base-200">
             </div>
         </div>
-    </dialog>
+        <div class="modal-action flex gap-2">
+            <form method="dialog" class="flex gap-2 w-full">
+                <button class="btn btn-cancel flex-1">取消</button>
+                <button onclick="addPFAccount()" class="btn btn-purple flex-[2]">確認新增</button>
+            </form>
+        </div>
+    </div>
+</dialog>
 
-    <script>
-        let db = JSON.parse(localStorage.getItem('ck_trading_v5')) || { workspaces: [], pfAccounts: [] };
-        let currentWorkspaceId = null; let chart = null;
-        let tempChecklist = []; // 暫存創建策略時的規則
+<script>
+// ==================== DATA ====================
+let db = JSON.parse(localStorage.getItem('ck_trading_v6')) || { workspaces: [], pfAccounts: [] };
 
-        function toggleDeviceView() {
-            const isMobile = document.body.classList.toggle('mobile-view');
-            const target = document.getElementById('toggle-icon');
-            const fixedStyle = 'style="color: #00d7ff;"';
-            target.innerHTML = isMobile 
-                ? `<div class="flex flex-col items-center leading-none" ${fixedStyle}><span class="text-xl">📱</span><span class="text-[10px] font-bold mt-1">手機版</span></div>`
-                : `<div class="flex flex-col items-center leading-none" ${fixedStyle}><span class="text-xl">💻</span><span class="text-[10px] font-bold mt-1">電腦版</span></div>`;
-            if (chart) updateDetail();
-        }
+// Migrate from v5 if exists
+(function migrate() {
+    const old = localStorage.getItem('ck_trading_v5');
+    if (old && !localStorage.getItem('ck_trading_v6')) {
+        try { db = JSON.parse(old); save(); } catch(e) {}
+    }
+})();
 
-        function toggleTheme() {
-            const html = document.documentElement;
-            const current = html.getAttribute('data-theme');
-            const target = current === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', target);
-            if (chart) updateDetail();
-        }
+let currentWorkspaceId = null;
+let chart = null;
+let tempChecklist = [];
+let pendingImage = null; // { dataUrl }
 
-        function save() { localStorage.setItem('ck_trading_v5', JSON.stringify(db)); }
-        function showPage(id) { document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active')); document.getElementById(id).classList.add('active'); if(id === 'page-home') renderHome(); if(id === 'page-propfirm') renderPF(); }
-        function goToHome() { currentWorkspaceId = null; document.getElementById('breadcrumb').classList.add('hidden'); showPage('page-home'); }
-        function deleteWorkspace(id) { if(confirm('確定永久刪除？')) { db.workspaces = db.workspaces.filter(ws => ws.id !== id); save(); renderHome(); } }
+// ==================== IndexedDB ====================
+let imageDB = null;
 
-        function handleImport(event) {
-            const file = event.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    if (imported.workspaces && imported.pfAccounts) { if (confirm('匯入將覆蓋現有資料？')) { db = imported; save(); window.location.reload(); } }
-                } catch (err) { alert('讀取失敗。'); }
-            };
-            reader.readAsText(file);
-        }
+function initImageDB() {
+    return new Promise((resolve) => {
+        const req = indexedDB.open('ck_trading_images_v1', 1);
+        req.onupgradeneeded = e => {
+            e.target.result.createObjectStore('images', { keyPath: 'tradeId' });
+        };
+        req.onsuccess = e => { imageDB = e.target.result; resolve(); };
+        req.onerror = () => { console.warn('IndexedDB unavailable'); resolve(); };
+    });
+}
 
-        function exportDataJSON() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
-            const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", `CK_Backup.json`); dl.click();
-        }
+function saveImage(tradeId, dataUrl) {
+    if (!imageDB) return Promise.resolve();
+    return new Promise((resolve) => {
+        const tx = imageDB.transaction('images', 'readwrite');
+        tx.objectStore('images').put({ tradeId, dataUrl });
+        tx.oncomplete = resolve;
+        tx.onerror = resolve;
+    });
+}
 
-        // --- 規則列表處理函數 ---
-        function openAddStrategyModal() {
-            tempChecklist = [];
-            document.getElementById('ns-rule-list').innerHTML = '';
-            document.getElementById('ns-rule-input').value = '';
-            document.getElementById('modal-add-strategy').showModal();
-        }
+function getImage(tradeId) {
+    if (!imageDB) return Promise.resolve(null);
+    return new Promise((resolve) => {
+        const tx = imageDB.transaction('images', 'readonly');
+        const req = tx.objectStore('images').get(tradeId);
+        req.onsuccess = () => resolve(req.result ? req.result.dataUrl : null);
+        req.onerror = () => resolve(null);
+    });
+}
 
-        function addRuleToList() {
-            const input = document.getElementById('ns-rule-input');
-            const rule = input.value.trim();
-            if (rule && !tempChecklist.includes(rule)) {
-                tempChecklist.push(rule);
-                renderTempRules();
-                input.value = '';
+function deleteImage(tradeId) {
+    if (!imageDB) return;
+    const tx = imageDB.transaction('images', 'readwrite');
+    tx.objectStore('images').delete(tradeId);
+}
+
+// ==================== IMAGE UI ====================
+function setupImageZone() {
+    const zone = document.getElementById('img-drop-zone');
+
+    // Drag & drop
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+        e.preventDefault(); zone.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) loadImageFile(file);
+    });
+
+    // Paste anywhere on page
+    document.addEventListener('paste', e => {
+        // only when detail page is active
+        if (!document.getElementById('page-detail').classList.contains('active')) return;
+        const items = e.clipboardData.items;
+        for (const item of items) {
+            if (item.type.startsWith('image/')) {
+                const blob = item.getAsFile();
+                loadImageFile(blob);
+                break;
             }
         }
+    });
+}
 
-        function removeTempRule(rule) {
-            tempChecklist = tempChecklist.filter(r => r !== rule);
-            renderTempRules();
+function handleImageFile(event) {
+    const file = event.target.files[0];
+    if (file) loadImageFile(file);
+    event.target.value = '';
+}
+
+function loadImageFile(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+        pendingImage = { dataUrl: e.target.result };
+        const preview = document.getElementById('img-preview');
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        document.getElementById('img-placeholder').style.display = 'none';
+        document.getElementById('img-clear-btn').style.display = 'flex';
+        document.getElementById('img-drop-zone').classList.add('has-image');
+        showToast('📸 截圖已載入');
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearPendingImage(e) {
+    e.stopPropagation();
+    pendingImage = null;
+    document.getElementById('img-preview').style.display = 'none';
+    document.getElementById('img-preview').src = '';
+    document.getElementById('img-placeholder').style.display = 'flex';
+    document.getElementById('img-clear-btn').style.display = 'none';
+    document.getElementById('img-drop-zone').classList.remove('has-image');
+}
+
+function openLightbox(dataUrl) {
+    document.getElementById('lightbox-img').src = dataUrl;
+    document.getElementById('lightbox').classList.add('open');
+}
+
+function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.getElementById('lightbox-img').src = '';
+}
+
+// ESC to close lightbox
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+// ==================== UTILS ====================
+function save() { localStorage.setItem('ck_trading_v6', JSON.stringify(db)); }
+
+function getNowLocal() {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
+
+function showToast(msg, type = 'success') {
+    const toast = document.getElementById('toast');
+    const msgEl = document.getElementById('toast-msg');
+    msgEl.className = `alert alert-${type} shadow-lg text-sm font-bold`;
+    msgEl.textContent = msg;
+    toast.style.display = 'block';
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 2000);
+}
+
+// ==================== NAVIGATION ====================
+function showPage(id) {
+    document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if (id === 'page-home') renderHome();
+    if (id === 'page-propfirm') renderPF();
+}
+
+function goToHome() {
+    currentWorkspaceId = null;
+    document.getElementById('breadcrumb').classList.add('hidden');
+    showPage('page-home');
+}
+
+function toggleTheme() {
+    const html = document.documentElement;
+    html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    if (chart) updateDetail();
+}
+
+function toggleDeviceView() {
+    const isMobile = document.body.classList.toggle('mobile-view');
+    const target = document.getElementById('toggle-icon');
+    target.innerHTML = isMobile
+        ? `<div class="flex flex-col items-center leading-none" style="color:#00d7ff"><span class="text-xl">📱</span><span class="text-[10px] font-bold mt-1">手機版</span></div>`
+        : `<div class="flex flex-col items-center leading-none" style="color:#00d7ff"><span class="text-xl">💻</span><span class="text-[10px] font-bold mt-1">電腦版</span></div>`;
+    if (chart) updateDetail();
+}
+
+// ==================== IMPORT / EXPORT ====================
+function handleImport(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        try {
+            const imported = JSON.parse(e.target.result);
+            if (imported.workspaces && imported.pfAccounts) {
+                if (confirm('匯入將覆蓋現有資料，確定繼續？')) { db = imported; save(); window.location.reload(); }
+            } else { alert('格式不正確。'); }
+        } catch { alert('讀取失敗，請確認是正確的備份檔案。'); }
+    };
+    reader.readAsText(file);
+}
+
+function exportDataJSON() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
+    const dl = document.createElement('a');
+    dl.setAttribute("href", dataStr);
+    dl.setAttribute("download", `CK_Backup_${new Date().toISOString().slice(0,10)}.json`);
+    dl.click();
+}
+
+function exportStrategyCSV(currentMonthOnly) {
+    const ws = db.workspaces.find(w => w.id === currentWorkspaceId);
+    if (!ws) return;
+    let trades = [...ws.trades];
+    if (currentMonthOnly) {
+        const selectedMonth = document.getElementById('filter-month').value;
+        if (selectedMonth !== 'all') {
+            trades = trades.filter(t => t.date.startsWith(selectedMonth));
         }
+    }
+    const headers = ['#', 'DateTime', 'Result', 'RR', 'PnL($)', 'Balance($)', 'Rules', 'Notes'];
+    let bal = ws.initialCapital;
+    const rows = trades.map((t, i) => {
+        bal += t.pnl;
+        const resultLabel = t.result === 1 ? 'WIN' : t.result === 2 ? 'BE' : 'LOSS';
+        return [i+1, t.date, resultLabel, t.rr, t.pnl, bal.toFixed(2), (t.rules||[]).join(' | '), (t.note||'').replace(/"/g,"'")];
+    });
+    const csvContent = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    const dl = document.createElement('a');
+    dl.setAttribute("href", "data:text/csv;charset=utf-8,\uFEFF" + encodeURIComponent(csvContent));
+    dl.setAttribute("download", `${ws.name}_${currentMonthOnly ? 'month' : 'all'}_${new Date().toISOString().slice(0,10)}.csv`);
+    dl.click();
+}
 
-        function renderTempRules() {
-            const container = document.getElementById('ns-rule-list');
-            container.innerHTML = tempChecklist.map(r => `
-                <div class="badge badge-primary gap-2 p-3 font-bold">
-                    <svg onclick="removeTempRule('${r}')" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-4 h-4 stroke-current cursor-pointer"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    ${r}
+// ==================== STRATEGY ====================
+function openAddStrategyModal() {
+    tempChecklist = [];
+    document.getElementById('ns-rule-list').innerHTML = '';
+    document.getElementById('ns-rule-input').value = '';
+    document.getElementById('ns-name').value = '';
+    document.getElementById('modal-add-strategy').showModal();
+}
+
+function addRuleToList() {
+    const input = document.getElementById('ns-rule-input');
+    const rule = input.value.trim();
+    if (rule && !tempChecklist.includes(rule)) {
+        tempChecklist.push(rule);
+        renderTempRules();
+        input.value = '';
+        input.focus();
+    }
+}
+
+function removeTempRule(index) {
+    tempChecklist.splice(index, 1);
+    renderTempRules();
+}
+
+function renderTempRules() {
+    document.getElementById('ns-rule-list').innerHTML = tempChecklist.map((r, i) => `
+        <div class="badge badge-primary gap-2 p-3 font-bold">
+            <svg onclick="removeTempRule(${i})" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                class="inline-block w-4 h-4 stroke-current cursor-pointer">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            ${r}
+        </div>`).join('');
+}
+
+function createStrategy() {
+    const name = document.getElementById('ns-name').value.trim();
+    if (!name) { alert('請輸入策略名稱'); return; }
+    const ws = {
+        id: Date.now(),
+        name,
+        initialCapital: parseFloat(document.getElementById('ns-cap').value) || 10000,
+        defaultRR: parseFloat(document.getElementById('ns-rr').value) || 2.0,
+        riskPerTrade: parseFloat(document.getElementById('ns-risk').value) || 100,
+        checklist: [...tempChecklist],
+        trades: []
+    };
+    db.workspaces.push(ws);
+    save(); renderHome();
+    document.getElementById('modal-add-strategy').close();
+    showToast('✅ 策略已建立');
+}
+
+function deleteWorkspace(id) {
+    if (confirm('確定永久刪除此策略？')) {
+        db.workspaces = db.workspaces.filter(ws => ws.id !== id);
+        save(); renderHome();
+    }
+}
+
+// ==================== HOME RENDER ====================
+function renderHome() {
+    const list = document.getElementById('strategy-list');
+    if (!db.workspaces.length) {
+        list.innerHTML = `<div class="col-span-3 text-center opacity-40 py-20">
+            <div class="text-5xl mb-4">📊</div>
+            <p class="font-bold">尚無策略，點擊右上方按鈕建立第一個系統</p>
+        </div>`;
+        return;
+    }
+    list.innerHTML = db.workspaces.map(ws => {
+        const trades = ws.trades;
+        const pnl = trades.reduce((s, t) => s + t.pnl, 0);
+        const wins = trades.filter(t => t.result === 1).length;
+        const winRate = trades.length ? ((wins / trades.length) * 100).toFixed(0) : 0;
+        const winTrades = trades.filter(t => t.result === 1);
+        const avgRR = wins ? (winTrades.reduce((s, t) => s + t.rr, 0) / winTrades.length).toFixed(1) : '0.0';
+        const balance = ws.initialCapital + pnl;
+        return `
+        <div class="card bg-base-100 shadow-xl border border-base-content/5 relative group cursor-pointer hover:border-primary/30 transition-all" onclick="enterWorkspace(${ws.id})">
+            <button onclick="event.stopPropagation(); deleteWorkspace(${ws.id})" class="absolute top-2 right-2 btn btn-circle btn-xs btn-ghost text-error opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+            <div class="card-body p-6">
+                <h2 class="card-title text-primary font-black italic">${ws.name}</h2>
+                <div class="grid grid-cols-2 gap-2 mt-2 text-[10px] uppercase font-bold opacity-60">
+                    <div>Win Rate: <span class="text-primary opacity-100">${winRate}%</span></div>
+                    <div>Avg RR: <span class="text-accent opacity-100">${avgRR}</span></div>
+                    <div>Samples: <span class="opacity-100">${trades.length}</span></div>
+                    <div>Risk/Trade: <span class="text-warning opacity-100">$${ws.riskPerTrade||100}</span></div>
                 </div>
-            `).join('');
+                <div class="flex justify-between items-center mt-4 border-t border-base-content/10 pt-3">
+                    <span class="text-xs font-bold opacity-60">Balance: $${balance.toFixed(0)}</span>
+                    <span class="${pnl >= 0 ? 'text-success' : 'text-error'} font-black text-xl">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(0)}</span>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ==================== WORKSPACE ENTRY ====================
+function enterWorkspace(id) {
+    currentWorkspaceId = id;
+    const ws = db.workspaces.find(w => w.id === id);
+    document.getElementById('current-nav-name').innerText = ws.name;
+    document.getElementById('breadcrumb').classList.remove('hidden');
+    document.getElementById('q-rr').value = ws.defaultRR;
+    document.getElementById('q-date').value = getNowLocal();
+    document.getElementById('q-amt').value = '';
+    document.getElementById('q-note').value = '';
+    clearPendingImage({ stopPropagation: () => {} });
+
+    // Render checklist
+    document.getElementById('checklist-items-container').innerHTML =
+        ws.checklist.length
+            ? ws.checklist.map(item => `
+                <label class="flex items-center gap-3 cursor-pointer hover:bg-base-100/30 p-1 rounded">
+                    <input type="checkbox" class="checkbox checkbox-success checkbox-sm rule-check" data-rule="${item}">
+                    <span class="text-[11px]">${item}</span>
+                </label>`).join('')
+            : '<p class="opacity-40 italic text-[10px]">無檢核項（建立策略時可新增）</p>';
+
+    // Populate month filter
+    populateMonthFilter(ws.trades);
+
+    showPage('page-detail');
+    updateDetail();
+}
+
+function populateMonthFilter(trades) {
+    const months = [...new Set(trades.map(t => t.date ? t.date.slice(0, 7) : '').filter(Boolean))].sort().reverse();
+    const select = document.getElementById('filter-month');
+    const current = select.value;
+    select.innerHTML = '<option value="all">所有月份數據</option>' +
+        months.map(m => `<option value="${m}" ${m === current ? 'selected' : ''}>${m}</option>`).join('');
+}
+
+// ==================== STATS ====================
+function calcStats(trades, initialCapital) {
+    if (!trades.length) return { winRate: 0, avgRR: 0, ev: 0, mdd: 0, roi: 0, totalPnl: 0, balance: initialCapital };
+
+    const wins = trades.filter(t => t.result === 1);
+    const losses = trades.filter(t => t.result === 0);
+    const total = trades.length;
+
+    const winRate = wins.length / total;
+    const lossRate = losses.length / total;
+
+    const avgRR = wins.length ? wins.reduce((s, t) => s + (t.rr || 0), 0) / wins.length : 0;
+    const avgWin = wins.length ? wins.reduce((s, t) => s + t.pnl, 0) / wins.length : 0;
+    const avgLoss = losses.length ? Math.abs(losses.reduce((s, t) => s + t.pnl, 0) / losses.length) : 0;
+    const ev = (winRate * avgWin) - (lossRate * avgLoss);
+
+    // MDD
+    let peak = initialCapital, bal = initialCapital, maxDD = 0;
+    trades.forEach(t => {
+        bal += t.pnl;
+        if (bal > peak) peak = bal;
+        const dd = peak > 0 ? ((peak - bal) / peak) * 100 : 0;
+        if (dd > maxDD) maxDD = dd;
+    });
+
+    const totalPnl = trades.reduce((s, t) => s + t.pnl, 0);
+    const roi = initialCapital ? (totalPnl / initialCapital) * 100 : 0;
+
+    return { winRate: winRate * 100, avgRR, ev, mdd: maxDD, roi, totalPnl, balance: initialCapital + totalPnl };
+}
+
+// ==================== UPDATE DETAIL ====================
+function updateDetail() {
+    const ws = db.workspaces.find(w => w.id === currentWorkspaceId);
+    if (!ws) return;
+
+    const selectedMonth = document.getElementById('filter-month').value;
+    let trades = ws.trades;
+    if (selectedMonth !== 'all') {
+        trades = trades.filter(t => t.date && t.date.startsWith(selectedMonth));
+    }
+
+    populateMonthFilter(ws.trades);
+
+    const stats = calcStats(trades, ws.initialCapital);
+
+    document.getElementById('d-balance').innerText = `$${stats.balance.toFixed(0)}`;
+    document.getElementById('d-count').innerText = trades.length;
+    document.getElementById('d-winrate').innerText = `${stats.winRate.toFixed(1)}%`;
+    document.getElementById('d-avgrr').innerText = stats.avgRR.toFixed(2);
+    document.getElementById('d-ev').innerText = `$${stats.ev.toFixed(0)}`;
+    document.getElementById('d-mdd').innerText = `${stats.mdd.toFixed(1)}%`;
+
+    const roiEl = document.getElementById('d-roi');
+    roiEl.innerText = `${stats.roi.toFixed(1)}%`;
+    roiEl.className = `stat-value text-lg md:text-xl font-mono ${stats.roi >= 0 ? 'text-success' : 'text-error'}`;
+
+    renderTable(trades, ws.initialCapital);
+    renderChart(trades, ws.initialCapital);
+}
+
+// ==================== TABLE ====================
+async function renderTable(trades, startCap) {
+    const tbody = document.getElementById('detail-table-body');
+    // Build rows first (reversed)
+    const reversed = [...trades].reverse();
+    let runningBal = startCap;
+    // Calculate balances in forward order
+    const balMap = {};
+    let bal = startCap;
+    trades.forEach(t => { bal += t.pnl; balMap[t.id] = bal; });
+
+    const rows = reversed.map((t, i) => {
+        const resultClass = t.result === 1 ? 'text-success' : t.result === 2 ? 'text-warning' : 'text-error';
+        const resultLabel = t.result === 1 ? '✅ WIN' : t.result === 2 ? '⚡ BE' : '❌ LOSS';
+        const rulesHtml = (t.rules && t.rules.length)
+            ? t.rules.map(r => `<span class="badge badge-outline badge-xs">${r}</span>`).join(' ')
+            : '<span class="opacity-30">—</span>';
+        const imgCell = t.hasImage
+            ? `<td><img class="thumb-img" data-trade-id="${t.id}" src="" onclick="viewTradeImage(${t.id})" title="點擊放大"></td>`
+            : '<td class="opacity-20">—</td>';
+
+        return `<tr>
+            <td class="opacity-50">${trades.length - i}</td>
+            <td class="text-[10px]">${(t.date||'').replace('T',' ')}</td>
+            <td class="font-black ${resultClass}">${resultLabel}</td>
+            <td>${t.rr}</td>
+            <td class="${t.pnl >= 0 ? 'text-success' : 'text-error'} font-bold">${t.pnl >= 0 ? '+' : ''}$${t.pnl}</td>
+            <td>$${(balMap[t.id]||0).toFixed(0)}</td>
+            <td class="max-w-[160px]"><div class="flex flex-wrap gap-1">${rulesHtml}</div></td>
+            <td class="max-w-[120px] text-[10px] opacity-70">${t.note||''}</td>
+            ${imgCell}
+            <td><button onclick="deleteTrade(${t.id})" class="btn btn-ghost btn-xs text-error opacity-50 hover:opacity-100">✕</button></td>
+        </tr>`;
+    });
+
+    tbody.innerHTML = rows.join('');
+
+    // Load thumbnail images asynchronously
+    const thumbs = tbody.querySelectorAll('.thumb-img[data-trade-id]');
+    for (const thumb of thumbs) {
+        const tid = parseInt(thumb.getAttribute('data-trade-id'));
+        const dataUrl = await getImage(tid);
+        if (dataUrl) thumb.src = dataUrl;
+    }
+}
+
+async function viewTradeImage(tradeId) {
+    const dataUrl = await getImage(tradeId);
+    if (dataUrl) openLightbox(dataUrl);
+}
+
+// ==================== CHART ====================
+function renderChart(trades, startCap) {
+    const ctx = document.getElementById('detailChart').getContext('2d');
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const tickColor = isDark ? '#94a3b8' : '#475569';
+    const gridColor = isDark ? 'rgba(148,163,184,0.1)' : 'rgba(71,85,105,0.1)';
+
+    let bal = startCap;
+    const dataPts = [startCap];
+    trades.forEach(t => { bal += t.pnl; dataPts.push(parseFloat(bal.toFixed(2))); });
+
+    const labels = dataPts.map((_, i) => i === 0 ? 'Start' : `#${i}`);
+
+    if (chart) chart.destroy();
+    chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Balance',
+                data: dataPts,
+                borderColor: '#00d7ff',
+                backgroundColor: 'rgba(0,215,255,0.06)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: dataPts.length > 50 ? 0 : 3,
+                pointHoverRadius: 5,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { ticks: { color: tickColor, callback: v => `$${v}` }, grid: { color: gridColor } },
+                x: { ticks: { color: tickColor, maxTicksLimit: 10 }, grid: { color: gridColor } }
+            }
         }
+    });
+}
 
-        function createStrategy() {
-            const name = document.getElementById('ns-name').value;
-            if(!name) return;
-            const ws = { 
-                id: Date.now(), 
-                name, 
-                initialCapital: parseFloat(document.getElementById('ns-cap').value)||10000, 
-                defaultRR: parseFloat(document.getElementById('ns-rr').value)||2.0, 
-                riskPerTrade: 100, 
-                checklist: [...tempChecklist], 
-                trades: [] 
-            };
-            db.workspaces.push(ws); save(); renderHome();
-            document.getElementById('modal-add-strategy').close();
-        }
+// ==================== QUICK LOG ====================
+async function quickLog(result) {
+    const ws = db.workspaces.find(w => w.id === currentWorkspaceId);
+    const rr = parseFloat(document.getElementById('q-rr').value) || 0;
+    const manualAmt = document.getElementById('q-amt').value;
+    const rulesMet = Array.from(document.querySelectorAll('.rule-check:checked')).map(cb => cb.getAttribute('data-rule'));
+    const note = document.getElementById('q-note').value.trim();
+    const risk = ws.riskPerTrade || 100;
 
-        function renderHome() {
-            const list = document.getElementById('strategy-list');
-            list.innerHTML = db.workspaces.map(ws => {
-                const trades = ws.trades;
-                const pnl = trades.reduce((s,t) => s + t.pnl, 0);
-                const wins = trades.filter(t => t.result === 1).length;
-                const winRate = trades.length ? ((wins / trades.length) * 100).toFixed(0) : 0;
-                const winTrades = trades.filter(t => t.result === 1);
-                const avgRR = wins ? (winTrades.reduce((s,t) => s + t.rr, 0) / winTrades.length).toFixed(1) : "0.0";
-                
-                return `<div class="card bg-base-100 shadow-xl border border-base-content/5 relative group cursor-pointer" onclick="enterWorkspace(${ws.id})">
-                        <button onclick="event.stopPropagation(); deleteWorkspace(${ws.id})" class="absolute top-2 right-2 btn btn-circle btn-xs btn-ghost text-error opacity-0 group-hover:opacity-100">✕</button>
-                        <div class="card-body p-6"><h2 class="card-title text-primary font-black italic">${ws.name}</h2>
-                        <div class="grid grid-cols-2 gap-2 mt-2">
-                            <div class="text-[10px] uppercase font-bold opacity-60">Win Rate: <span>${winRate}%</span></div>
-                            <div class="text-[10px] uppercase font-bold opacity-60">Avg RR: <span>${avgRR}</span></div>
-                        </div>
-                        <div class="flex justify-between items-center mt-4 border-t border-base-content/10 pt-2">
-                        <span class="text-xs font-bold opacity-60">Balance: $${(ws.initialCapital + pnl).toFixed(0)}</span>
-                        <span class="${pnl>=0?'text-success':'text-error'} font-black text-xl">${pnl>=0?'+':''}$${pnl.toFixed(0)}</span></div></div></div>`;
-            }).join('');
-        }
+    let pnl;
+    if (manualAmt !== '') {
+        pnl = parseFloat(manualAmt);
+    } else {
+        pnl = result === 1 ? risk * rr : result === 0 ? -risk : 0;
+    }
 
-        function enterWorkspace(id) {
-            currentWorkspaceId = id; const ws = db.workspaces.find(w => w.id === id);
-            document.getElementById('current-nav-name').innerText = ws.name;
-            document.getElementById('breadcrumb').classList.remove('hidden');
-            document.getElementById('q-rr').value = ws.defaultRR;
-            document.getElementById('checklist-items-container').innerHTML = ws.checklist.map(item => `<label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-success checkbox-sm rule-check" data-rule="${item}" /><span>${item}</span></label>`).join('') || '<p class="opacity-40 italic">無檢核項</p>';
-            showPage('page-detail'); updateDetail();
-        }
+    const tradeId = Date.now();
+    const trade = {
+        id: tradeId,
+        date: document.getElementById('q-date').value || getNowLocal(),
+        result, rr, pnl,
+        rules: rulesMet,
+        note,
+        hasImage: !!pendingImage
+    };
 
-        function quickLog(result) {
-            const ws = db.workspaces.find(w => w.id === currentWorkspaceId);
-            const rr = parseFloat(document.getElementById('q-rr').value) || 0;
-            const manualAmt = document.getElementById('q-amt').value;
-            const rulesMet = Array.from(document.querySelectorAll('.rule-check:checked')).map(cb => cb.getAttribute('data-rule'));
-            let pnl = manualAmt !== "" ? parseFloat(manualAmt) : (result === 1 ? ws.riskPerTrade * rr : (result === 0 ? -ws.riskPerTrade : 0));
-            ws.trades.push({ id: Date.now(), date: document.getElementById('q-date').value || new Date().toISOString().slice(0,16), result, rr, pnl, rules: rulesMet, note: document.getElementById('q-note').value });
-            save(); updateDetail();
-        }
+    ws.trades.push(trade);
 
-        function updateDetail() {
-            const ws = db.workspaces.find(w => w.id === currentWorkspaceId);
-            const trades = ws.trades;
-            let currentBal = ws.initialCapital; trades.forEach(t => currentBal += t.pnl);
-            document.getElementById('d-balance').innerText = `$${currentBal.toFixed(0)}`;
-            document.getElementById('d-count').innerText = trades.length;
-            renderTable(trades, ws.initialCapital); renderChart(trades, ws.initialCapital);
-        }
+    // Save image if pending
+    if (pendingImage) {
+        await saveImage(tradeId, pendingImage.dataUrl);
+    }
 
-        function renderTable(trades, startCap) {
-            let bal = startCap; document.getElementById('detail-table-body').innerHTML = trades.map((t, i) => { 
-                bal += t.pnl; return `<tr><td>${i+1}</td><td>${t.date.replace('T', ' ')}</td><td>${t.result===1?'WIN':t.result===2?'BE':'LOSS'}</td><td>${t.rr}</td><td>$${t.pnl}</td><td>$${bal}</td><td>${t.note}</td><td><button onclick="deleteTrade(${t.id})" class="btn btn-ghost btn-xs text-error">X</button></td></tr>`; 
-            }).reverse().join('');
-        }
+    save();
 
-        function renderChart(trades, startCap) {
-            const ctx = document.getElementById('detailChart').getContext('2d');
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            let bal = startCap; const dataPts = [startCap]; trades.forEach(t => { bal += t.pnl; dataPts.push(bal); });
-            if(chart) chart.destroy();
-            chart = new Chart(ctx, { type: 'line', data: { labels: dataPts.map((_, i) => i), datasets: [{ data: dataPts, borderColor: '#00d7ff', fill: true, tension: 0.1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { color: isDark ? '#94a3b8' : '#475569' } }, x: { ticks: { color: isDark ? '#94a3b8' : '#475569' } } } }});
-        }
+    // Reset form
+    document.getElementById('q-date').value = getNowLocal();
+    document.getElementById('q-amt').value = '';
+    document.getElementById('q-note').value = '';
+    document.querySelectorAll('.rule-check').forEach(cb => cb.checked = false);
+    clearPendingImage({ stopPropagation: () => {} });
 
-        function deleteTrade(tid) { if(confirm('刪除？')){ const ws = db.workspaces.find(w => w.id === currentWorkspaceId); ws.trades = ws.trades.filter(t => t.id !== tid); save(); updateDetail(); } }
+    populateMonthFilter(ws.trades);
+    updateDetail();
 
-        function addPFAccount() { 
-            const company = document.getElementById('npf-company').value, cost = parseFloat(document.getElementById('npf-cost').value) || 0; 
-            if(!company) return; 
-            db.pfAccounts.push({ id: Date.now(), company, cost, status: 'eval', payouts: [] }); 
-            save(); renderPF(); document.getElementById('modal-add-pf').close(); 
-        }
+    const labels = ['❌ LOSS 已記錄', '⚡ BE 已記錄', '✅ WIN 已記錄'];
+    const types = ['error', 'warning', 'success'];
+    showToast(labels[result], types[result]);
+}
 
-        function updatePFCost(id, n) { db.pfAccounts.find(a=>a.id===id).cost = parseFloat(n)||0; save(); renderPFStats(); }
-        function updatePFStatus(id, s) { db.pfAccounts.find(a=>a.id===id).status = s; save(); renderPFStats(); }
+function deleteTrade(tid) {
+    if (!confirm('確定刪除此筆交易紀錄？')) return;
+    const ws = db.workspaces.find(w => w.id === currentWorkspaceId);
+    const trade = ws.trades.find(t => t.id === tid);
+    if (trade && trade.hasImage) deleteImage(tid);
+    ws.trades = ws.trades.filter(t => t.id !== tid);
+    save();
+    populateMonthFilter(ws.trades);
+    updateDetail();
+    showToast('🗑️ 已刪除');
+}
 
-        function renderPF() { 
-            const tbody = document.getElementById('pf-table-body'); 
-            tbody.innerHTML = db.pfAccounts.map(acc => {
-                const totalPayout = acc.payouts ? acc.payouts.reduce((s,p) => s+p.amount, 0) : 0;
-                return `<tr>
-                    <td class="font-black text-primary">${acc.company}</td>
-                    <td><input type="number" value="${acc.cost}" onchange="updatePFCost(${acc.id}, this.value)" class="input input-xs input-bordered w-24 bg-base-200"></td>
-                    <td>
-                        <select onchange="updatePFStatus(${acc.id}, this.value)" class="select select-xs select-bordered bg-base-200">
-                            <option value="eval" ${acc.status==='eval'?'selected':''}>考核中</option>
-                            <option value="passed" ${acc.status==='passed'?'selected':''}>已通過</option>
-                            <option value="payout" ${acc.status==='payout'?'selected':''}>已分潤</option>
-                            <option value="failed" ${acc.status==='failed'?'selected':''}>考試失敗</option>
-                            <option value="blown" ${acc.status==='blown'?'selected':''}>帳號爆倉</option>
-                        </select>
-                    </td>
-                    <td>+$${totalPayout}</td>
-                    <td><button onclick="addPayout(${acc.id})" class="btn btn-xs btn-success">Pay</button></td>
-                </tr>`;
-            }).join('');
-            renderPFStats();
-        }
+// ==================== PROP FIRM ====================
+function addPFAccount() {
+    const company = document.getElementById('npf-company').value.trim();
+    const cost = parseFloat(document.getElementById('npf-cost').value) || 0;
+    if (!company) { alert('請輸入公司名稱'); return; }
+    db.pfAccounts.push({ id: Date.now(), company, cost, status: 'eval', payouts: [] });
+    save(); renderPF();
+    document.getElementById('modal-add-pf').close();
+}
 
-        function renderPFStats() {
-            const cost = db.pfAccounts.reduce((s,a)=>s+a.cost,0), pay = db.pfAccounts.reduce((s,a)=>s+(a.payouts?a.payouts.reduce((sp,p)=>sp+p.amount,0):0),0);
-            const total = db.pfAccounts.length; const passRate = total ? (db.pfAccounts.filter(a => a.status !== 'failed' && a.status !== 'eval').length / total * 100).toFixed(0) : 0;
-            document.getElementById('pf-total-cost').innerText=`$${cost.toFixed(0)}`; 
-            document.getElementById('pf-total-payout').innerText=`$${pay.toFixed(0)}`; 
-            document.getElementById('pf-pass-rate').innerText=`${passRate}%`; 
-            document.getElementById('pf-net-pnl').innerText=`$${(pay-cost).toFixed(0)}`; 
-            document.getElementById('pf-net-pnl').className=`text-2xl font-black ${(pay-cost)>=0?'text-accent':'text-error'}`;
-        }
+function updatePFCost(id, n) { db.pfAccounts.find(a => a.id === id).cost = parseFloat(n) || 0; save(); renderPFStats(); }
+function updatePFStatus(id, s) { db.pfAccounts.find(a => a.id === id).status = s; save(); renderPFStats(); }
+function deletePF(id) { if (confirm('確定刪除？')) { db.pfAccounts = db.pfAccounts.filter(a => a.id !== id); save(); renderPF(); } }
 
-        function addPayout(id) { const amt = prompt("金額:"); if(amt){ db.pfAccounts.find(a=>a.id===id).payouts.push({amount:parseFloat(amt)}); save(); renderPF(); } }
-        
-        window.onload = renderHome;
-    </script>
+function addPayout(id) {
+    const amt = prompt('輸入出金金額 ($):');
+    if (amt && !isNaN(parseFloat(amt))) {
+        db.pfAccounts.find(a => a.id === id).payouts.push({ amount: parseFloat(amt), date: new Date().toISOString().slice(0,10) });
+        save(); renderPF();
+    }
+}
+
+function renderPF() {
+    const tbody = document.getElementById('pf-table-body');
+    tbody.innerHTML = db.pfAccounts.map(acc => {
+        const totalPayout = (acc.payouts || []).reduce((s, p) => s + p.amount, 0);
+        const statusMap = { eval: ['考核中', 'warning'], passed: ['已通過', 'success'], payout: ['已出金', 'info'], failed: ['考試失敗', 'error'], blown: ['帳號爆倉', 'error'] };
+        const [statusLabel] = statusMap[acc.status] || ['未知', 'ghost'];
+        return `<tr>
+            <td class="font-black text-primary">${acc.company}</td>
+            <td><input type="number" value="${acc.cost}" onchange="updatePFCost(${acc.id}, this.value)" class="input input-xs input-bordered w-24 bg-base-200"></td>
+            <td>
+                <select onchange="updatePFStatus(${acc.id}, this.value)" class="select select-xs select-bordered bg-base-200">
+                    <option value="eval" ${acc.status==='eval'?'selected':''}>考核中</option>
+                    <option value="passed" ${acc.status==='passed'?'selected':''}>已通過</option>
+                    <option value="payout" ${acc.status==='payout'?'selected':''}>已分潤</option>
+                    <option value="failed" ${acc.status==='failed'?'selected':''}>考試失敗</option>
+                    <option value="blown" ${acc.status==='blown'?'selected':''}>帳號爆倉</option>
+                </select>
+            </td>
+            <td class="text-success font-bold">+$${totalPayout.toFixed(0)}</td>
+            <td class="flex gap-1">
+                <button onclick="addPayout(${acc.id})" class="btn btn-xs btn-success">💰 出金</button>
+                <button onclick="deletePF(${acc.id})" class="btn btn-xs btn-ghost text-error">✕</button>
+            </td>
+        </tr>`;
+    }).join('');
+    renderPFStats();
+}
+
+function renderPFStats() {
+    const accounts = db.pfAccounts;
+    const cost = accounts.reduce((s, a) => s + a.cost, 0);
+    const pay = accounts.reduce((s, a) => s + (a.payouts || []).reduce((sp, p) => sp + p.amount, 0), 0);
+    const total = accounts.length;
+    // Pass rate: accounts that are not eval or failed
+    const passed = accounts.filter(a => a.status === 'passed' || a.status === 'payout').length;
+    const completed = accounts.filter(a => a.status !== 'eval').length;
+    const passRate = completed ? ((passed / completed) * 100).toFixed(0) : 0;
+    const net = pay - cost;
+
+    document.getElementById('pf-total-cost').innerText = `$${cost.toFixed(0)}`;
+    document.getElementById('pf-total-payout').innerText = `$${pay.toFixed(0)}`;
+    document.getElementById('pf-pass-rate').innerText = `${passRate}%`;
+    document.getElementById('pf-net-pnl').innerText = `${net >= 0 ? '+' : ''}$${net.toFixed(0)}`;
+    document.getElementById('pf-net-pnl').className = `text-2xl font-black ${net >= 0 ? 'text-accent' : 'text-error'} font-mono`;
+}
+
+// ==================== INIT ====================
+window.addEventListener('load', async () => {
+    await initImageDB();
+    setupImageZone();
+    renderHome();
+});
+</script>
 </body>
 </html>
