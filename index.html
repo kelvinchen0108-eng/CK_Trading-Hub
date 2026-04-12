@@ -1,1000 +1,1273 @@
 <!DOCTYPE html>
 <html lang="zh-TW" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CK Trading Hub v6.0</title>
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .page-content { display: none; }
-        .page-content.active { display: block; }
-
-        .logic-hint { position: relative; cursor: help; }
-        .logic-hint:hover .hint-text { display: block; }
-        .hint-text {
-            display: none; position: absolute; z-index: 100; width: 240px;
-            background-color: #1e293b; color: #f8fafc; padding: 12px;
-            border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
-            border: 1px solid rgba(128,128,128,0.2); top: 110%; left: 50%;
-            transform: translateX(-50%); font-size: 11px; line-height: 1.5; pointer-events: none;
-        }
-
-        .btn-purple { background-color: #8b5cf6 !important; color: #fff !important; border: none; }
-        .btn-purple:hover { background-color: #7c3aed !important; }
-        .btn-silver { background-color: #cbd5e1; color: #0f172a; border: none; }
-        .btn-silver:hover { background-color: #94a3b8; }
-        .btn-cancel { background-color: #475569; color: white; border: none; }
-
-        .rule-check:checked + span { color: #4ade80; font-weight: bold; }
-        .rule-check { width: 1.25rem; height: 1.25rem; }
-
-        /* Image drop zone */
-        #img-drop-zone {
-            border: 2px dashed rgba(0,215,255,0.3);
-            border-radius: 12px;
-            padding: 16px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            min-height: 80px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            position: relative;
-        }
-        #img-drop-zone.drag-over { border-color: #00d7ff; background: rgba(0,215,255,0.05); }
-        #img-drop-zone.has-image { border-color: #4ade80; background: rgba(74,222,128,0.05); }
-        #img-preview { max-width: 100%; max-height: 120px; border-radius: 8px; object-fit: contain; display: none; }
-
-        /* Lightbox */
-        #lightbox {
-            display: none; position: fixed; inset: 0; z-index: 9999;
-            background: rgba(0,0,0,0.9); align-items: center; justify-content: center;
-        }
-        #lightbox.open { display: flex; }
-        #lightbox img { max-width: 92vw; max-height: 90vh; border-radius: 12px; box-shadow: 0 0 60px rgba(0,0,0,0.8); }
-        #lightbox-close {
-            position: absolute; top: 20px; right: 28px;
-            font-size: 2.5rem; color: white; cursor: pointer; line-height: 1;
-            opacity: 0.7; transition: opacity 0.2s;
-        }
-        #lightbox-close:hover { opacity: 1; }
-
-        /* Mobile */
-        body.mobile-view .max-w-7xl { max-width: 480px; margin: 0 auto; }
-        body.mobile-view .grid-cols-7, body.mobile-view .grid-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-        body.mobile-view .stat-value { font-size: 1.1rem !important; }
-        body.mobile-view .stat-title { font-size: 9px !important; }
-        body.mobile-view .lg\:col-span-2 { grid-column: span 1 / span 1; }
-        body.mobile-view #breadcrumb { display: none; }
-
-        #view-toggle-btn { position: fixed; bottom: 20px; right: 20px; z-index: 998; box-shadow: 0 4px 14px rgba(0,0,0,0.5); }
-
-        .thumb-img { width: 36px; height: 36px; object-fit: cover; border-radius: 6px; cursor: pointer; transition: transform 0.15s; border: 1px solid rgba(255,255,255,0.1); }
-        .thumb-img:hover { transform: scale(1.1); }
-
-        /* Toast */
-        #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 9000; display: none; }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CK Trading Hub v8.0</title>
+<link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<style>
+.page-content,.tab-pane{display:none}
+.page-content.active,.tab-pane.active{display:block}
+.logic-hint{position:relative;cursor:help}
+.logic-hint:hover .hint-text{display:block}
+.hint-text{display:none;position:absolute;z-index:200;width:210px;background:#1e293b;color:#f8fafc;padding:10px;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,.5);border:1px solid rgba(128,128,128,.2);top:110%;left:50%;transform:translateX(-50%);font-size:10px;line-height:1.5;pointer-events:none}
+.btn-purple{background:#8b5cf6!important;color:#fff!important;border:none}.btn-purple:hover{background:#7c3aed!important}
+.btn-silver{background:#cbd5e1;color:#0f172a;border:none}.btn-silver:hover{background:#94a3b8}
+.btn-cancel{background:#475569;color:#fff;border:none}
+.rule-check:checked+span{color:#4ade80;font-weight:700}
+.img-zone{border:2px dashed rgba(0,215,255,.3);border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all .2s;min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;position:relative}
+.img-zone.drag-over{border-color:#00d7ff;background:rgba(0,215,255,.06)}
+.img-zone.has-img{border-color:#4ade80}
+#lightbox{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.93);align-items:center;justify-content:center;flex-direction:column;gap:12px}
+#lightbox.open{display:flex}
+#lightbox img{max-width:92vw;max-height:85vh;border-radius:10px}
+#lb-nav{display:flex;gap:16px}
+#lb-nav button{background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;padding:6px 18px;font-size:1.2rem;cursor:pointer}
+#lb-nav button:hover{background:rgba(255,255,255,.3)}
+#lb-close{position:absolute;top:14px;right:22px;font-size:2.2rem;color:#fff;cursor:pointer;opacity:.7}
+#lb-close:hover{opacity:1}
+.cal-cell{min-height:52px;border-radius:6px;padding:3px 5px;font-size:10px;border:1px solid rgba(255,255,255,.06);cursor:pointer;overflow:hidden}
+.cal-cell:hover{border-color:rgba(0,215,255,.35)}
+.cal-cell.profit{background:rgba(74,222,128,.14)}
+.cal-cell.loss{background:rgba(248,113,113,.14)}
+.cal-cell.be{background:rgba(251,191,36,.09)}
+.cal-cell.today-cell{border-color:#00d7ff!important}
+.cal-cell.empty-cell{opacity:.1;pointer-events:none}
+#daily-warn{display:none;position:fixed;top:66px;left:50%;transform:translateX(-50%);z-index:600;min-width:280px}
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9000;display:none;min-width:180px}
+.thumb{width:44px;height:44px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid rgba(255,255,255,.15);transition:transform .15s;flex-shrink:0}
+.thumb:hover{transform:scale(1.1)}
+.score-A{color:#4ade80}.score-B{color:#86efac}.score-C{color:#fbbf24}.score-D{color:#fb923c}.score-F{color:#f87171}
+body.mobile-view .max-w-7xl{max-width:480px;margin:0 auto}
+body.mobile-view .grid-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+body.mobile-view .grid-stats2{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+body.mobile-view #breadcrumb{display:none}
+#vtbtn{position:fixed;bottom:20px;right:20px;z-index:998;box-shadow:0 4px 14px rgba(0,0,0,.5)}
+.dd-ok{color:#4ade80}.dd-warn{color:#fbbf24}.dd-danger{color:#f87171}
+.tab-btn{font-size:11px;padding:4px 10px}
+/* chart containers fixed height to prevent infinite grow */
+.chart-box{position:relative;height:180px;width:100%}
+.chart-box-lg{position:relative;height:300px;width:100%}
+.chart-box-sm{position:relative;height:80px;width:100%}
+</style>
 </head>
-<body class="min-h-screen bg-base-300 text-base-content font-sans transition-colors duration-300 mobile-view">
+<body class="min-h-screen bg-base-300 text-base-content font-sans mobile-view">
 
-<!-- Lightbox -->
-<div id="lightbox" onclick="closeLightbox()">
-    <span id="lightbox-close" onclick="closeLightbox()">×</span>
-    <img id="lightbox-img" src="" alt="trade screenshot">
+<div id="lightbox" onclick="lbBgClick(event)">
+  <span id="lb-close" onclick="closeLb()">×</span>
+  <img id="lb-img" src="" alt="">
+  <div id="lb-nav"><button onclick="lbPrev()">‹</button><span id="lb-counter" class="text-white text-sm self-center"></span><button onclick="lbNext()">›</button></div>
 </div>
-
-<!-- Toast -->
-<div id="toast"><div class="alert alert-success shadow-lg text-sm font-bold" id="toast-msg">✓ 已儲存</div></div>
-
-<!-- View Toggle -->
-<button id="view-toggle-btn" onclick="toggleDeviceView()" class="btn btn-circle btn-primary btn-lg">
-    <span id="toggle-icon"><div class="flex flex-col items-center leading-none" style="color:#00d7ff"><span class="text-xl">📱</span><span class="text-[10px] font-bold mt-1">手機版</span></div></span>
+<div id="daily-warn">
+  <div class="alert alert-error shadow-2xl font-bold text-sm gap-2 flex-nowrap">
+    <span>⚠️</span><span id="daily-warn-msg" class="flex-1"></span>
+    <button onclick="document.getElementById('daily-warn').style.display='none'" class="btn btn-xs btn-ghost">✕</button>
+  </div>
+</div>
+<div id="toast"><div id="toast-msg" class="alert shadow-lg text-sm font-bold"></div></div>
+<button id="vtbtn" onclick="toggleView()" class="btn btn-circle btn-primary btn-lg">
+  <div id="vticon" class="flex flex-col items-center leading-none" style="color:#00d7ff">
+    <span class="text-xl">📱</span><span class="text-[10px] font-bold mt-0.5">手機版</span>
+  </div>
 </button>
 
 <!-- Navbar -->
-<div class="navbar bg-base-100 shadow-2xl px-6 sticky top-0 z-50 border-b border-base-content/5">
-    <div class="flex-1">
-        <button class="btn btn-ghost text-xl font-black text-primary" onclick="goToHome()">CK Trading Hub<span class="text-xs font-normal opacity-70 italic ml-1">v6.0</span></button>
-        <div id="breadcrumb" class="text-sm breadcrumbs ml-4 hidden">
-            <ul>
-                <li><a onclick="goToHome()" class="hover:text-primary font-bold">Workspace</a></li>
-                <li id="current-nav-name" class="font-bold">Detail</li>
-            </ul>
-        </div>
+<nav class="navbar bg-base-100 shadow-2xl px-3 sticky top-0 z-50 border-b border-base-content/5 gap-1">
+  <div class="flex-1 gap-1 min-w-0">
+    <button class="btn btn-ghost text-base font-black text-primary shrink-0 px-2" onclick="goHome()">CK Trading Hub <span class="text-[10px] font-normal opacity-40 ml-0.5">v8</span></button>
+    <div id="breadcrumb" class="text-xs breadcrumbs ml-1 hidden truncate">
+      <ul><li><a onclick="goHome()" class="hover:text-primary font-bold">首頁</a></li><li id="cur-nav" class="font-bold truncate max-w-[100px]"></li></ul>
     </div>
-    <div class="flex-none gap-2">
-        <button onclick="toggleTheme()" class="btn btn-xs btn-ghost border border-base-content/20">🌓 切換主題</button>
-        <div class="join">
-            <button onclick="document.getElementById('import-input').click()" class="btn btn-xs btn-outline btn-accent join-item">匯入</button>
-            <button onclick="exportDataJSON()" class="btn btn-xs btn-outline btn-accent join-item">匯出備份</button>
-        </div>
-        <input type="file" id="import-input" class="hidden" accept=".json,.txt" onchange="handleImport(event)">
-        <button onclick="showPage('page-propfirm')" class="btn btn-sm btn-purple font-bold shadow-lg">Prop Firm 管理中心</button>
+  </div>
+  <div class="flex-none flex items-center gap-1 shrink-0 flex-wrap justify-end">
+    <button onclick="toggleTheme()" class="btn btn-xs btn-ghost border border-base-content/20">🌓</button>
+    <div class="join">
+      <button onclick="document.getElementById('imp-inp').click()" class="btn btn-xs btn-outline btn-accent join-item">匯入</button>
+      <button onclick="exportJSON()" class="btn btn-xs btn-outline btn-accent join-item">備份</button>
     </div>
+    <input type="file" id="imp-inp" class="hidden" accept=".json" onchange="handleImport(event)">
+    <button onclick="openSettings()" class="btn btn-xs btn-ghost border border-base-content/20" title="設定">⚙️</button>
+    <button onclick="showPage('page-signal')" class="btn btn-xs btn-outline btn-secondary font-bold">績效驗證</button>
+    <button onclick="showPage('page-pf')" class="btn btn-sm btn-purple font-bold">Prop Firm</button>
+  </div>
+</nav>
+
+<div class="p-3 max-w-7xl mx-auto">
+
+<!-- ===== HOME ===== -->
+<section id="page-home" class="page-content active">
+  <!-- Promo Banner -->
+  <div class="bg-gradient-to-br from-info/10 via-base-100 to-secondary/10 border border-info/20 rounded-2xl p-4 mb-5 shadow-lg">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="badge badge-info badge-sm font-bold">🔬 NEW</span>
+          <h3 class="font-black text-info text-sm">你的訊號源，真的有在賺錢嗎？</h3>
+        </div>
+        <p class="text-[10px] opacity-60 max-w-lg leading-relaxed">現在你可以把你所在的任何外匯／加密貨幣報單群、訊號頻道的記錄，匯入系統自動計算真實勝率、盈虧曲線與 Profit Factor。不用再靠截圖吹噓，數據說話才準。</p>
+        <p class="text-[9px] opacity-40 mt-0.5">✅ 資料存在你的瀏覽器 ｜ 支援 Excel 批量匯入 ｜ 自動計算 RR / W/L</p>
+      </div>
+      <button onclick="showPage('page-signal')" class="btn btn-info btn-sm font-black shrink-0">立即驗證我的訊號源 →</button>
+    </div>
+  </div>
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 gap-4 bg-base-100 p-5 rounded-3xl border border-base-content/5 shadow-xl">
+    <div>
+      <h2 class="text-3xl font-black tracking-tighter uppercase">策略工作區</h2>
+      <p class="text-[10px] text-primary mt-1">建立策略 → 錄入交易 → 分析優化 EV</p>
+      <p class="text-[9px] text-accent mt-0.5">⚠️ 資料存於本地瀏覽器，請定期匯出 JSON 備份。截圖存於 IndexedDB。</p>
+    </div>
+    <button onclick="openAddWS()" class="btn btn-silver font-black text-base shrink-0">+ 建立新策略系統</button>
+  </div>
+  <div id="ws-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+</section>
+
+<!-- ===== DETAIL ===== -->
+<section id="page-detail" class="page-content space-y-3">
+  <div class="bg-base-100 p-3 rounded-box shadow border border-base-content/5">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div class="tabs tabs-boxed bg-base-200">
+        <a class="tab tab-btn tab-active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 儀表板</a>
+        <a class="tab tab-btn" data-tab="calendar" onclick="switchTab('calendar')">📅 日曆</a>
+        <a class="tab tab-btn" data-tab="analytics" onclick="switchTab('analytics')">🔬 分析</a>
+        <a class="tab tab-btn" data-tab="simulator" onclick="switchTab('simulator')">🎲 模擬</a>
+        <a class="tab tab-btn" data-tab="journal" onclick="switchTab('journal')">📔 日誌</a>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <select id="filter-month" class="select select-xs select-bordered font-bold bg-base-200" onchange="updateDetail()"><option value="all">所有月份</option></select>
+        <button onclick="exportCSV(true)" class="btn btn-xs btn-outline btn-primary">當月CSV</button>
+        <button onclick="exportCSV(false)" class="btn btn-xs btn-outline btn-primary">全部CSV</button>
+        <button class="btn btn-ghost btn-xs opacity-50 font-bold" onclick="goHome()">← 返回</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Row 1 -->
+  <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 grid-stats">
+    <div class="stat bg-base-100 shadow rounded-box p-2 border-b-4 border-success"><div class="stat-title text-[8px] uppercase font-bold opacity-60">Balance</div><div id="d-balance" class="stat-value text-sm md:text-base font-mono">$0</div></div>
+    <div class="stat bg-base-100 shadow rounded-box p-2 border-b-4 border-primary"><div class="stat-title text-[8px] uppercase font-bold opacity-60">Win Rate</div><div id="d-winrate" class="stat-value text-sm md:text-base text-primary font-mono">0%</div></div>
+    <div class="stat bg-base-100 shadow rounded-box p-2 border-b-4 border-accent logic-hint"><div class="stat-title text-[8px] uppercase font-bold opacity-60 flex gap-1">Avg RR<span class="badge badge-outline badge-xs">?</span></div><div id="d-avgrr" class="stat-value text-sm md:text-base text-accent font-mono">0.0</div><div class="hint-text"><strong>平均 RR</strong><br>獲利交易的平均風險報酬比</div></div>
+    <div class="stat bg-base-100 shadow rounded-box p-2 border-b-4 border-warning logic-hint"><div class="stat-title text-[8px] uppercase font-bold opacity-60 flex gap-1">EV<span class="badge badge-outline badge-xs">?</span></div><div id="d-ev" class="stat-value text-sm md:text-base text-warning font-mono">$0</div><div class="hint-text"><strong>預期值</strong><br>(勝率×平均獲利) − (敗率×平均虧損)</div></div>
+    <div class="stat bg-base-100 shadow rounded-box p-2 border-b-4 border-error logic-hint"><div class="stat-title text-[8px] uppercase font-bold opacity-60 flex gap-1">MDD<span class="badge badge-outline badge-xs">?</span></div><div id="d-mdd" class="stat-value text-sm md:text-base text-error font-mono">0%</div><div class="hint-text"><strong>最大回撤</strong><br>從最高點跌至最低點的最大%</div></div>
+    <div class="stat bg-base-100 shadow rounded-box p-2 border-b-4 border-base-content/20 logic-hint"><div class="stat-title text-[8px] uppercase font-bold opacity-60 flex gap-1">ROI<span class="badge badge-outline badge-xs">?</span></div><div id="d-roi" class="stat-value text-sm md:text-base font-mono">0%</div><div class="hint-text"><strong>投資報酬率</strong><br>(總盈虧÷起始本金)×100%</div></div>
+    <div class="stat bg-base-100 shadow rounded-box p-2 border-b-4 border-secondary logic-hint"><div class="stat-title text-[8px] uppercase font-bold opacity-60 flex gap-1">PF<span class="badge badge-outline badge-xs">?</span></div><div id="d-pf" class="stat-value text-sm md:text-base text-secondary font-mono">0.0</div><div class="hint-text"><strong>Profit Factor</strong><br>總獲利÷總虧損，>1.5為良好系統</div></div>
+  </div>
+  <!-- Stats Row 2 -->
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-2 grid-stats2">
+    <div class="bg-base-100 rounded-box p-2 shadow border border-base-content/5 logic-hint"><div class="text-[8px] uppercase font-bold opacity-50">Kelly 建議倉位</div><div id="d-kelly" class="text-base font-mono font-black text-warning">0%</div><div class="hint-text"><strong>凱利公式</strong><br>勝率-(1-勝率)/Avg RR，建議使用1/4 Kelly降低風險</div></div>
+    <div class="bg-base-100 rounded-box p-2 shadow border border-base-content/5"><div class="text-[8px] uppercase font-bold opacity-50">最長連敗</div><div id="d-consec" class="text-base font-mono font-black text-error">0 筆</div></div>
+    <div class="bg-base-100 rounded-box p-2 shadow border border-base-content/5"><div class="text-[8px] uppercase font-bold opacity-50">樣本數</div><div id="d-count" class="text-base font-mono font-black">0</div></div>
+    <div class="bg-base-100 rounded-box p-2 shadow border border-base-content/5"><div class="text-[8px] uppercase font-bold opacity-50">違規交易</div><div id="d-viol" class="text-base font-mono font-black text-error">0 筆</div></div>
+    <div class="bg-base-100 rounded-box p-2 shadow border border-base-content/5 text-center"><div class="text-[8px] uppercase font-bold opacity-50">系統評分</div><div id="d-score" class="text-xl font-black font-mono">—</div></div>
+  </div>
+  <!-- Monthly Target -->
+  <div id="mt-bar" class="hidden bg-base-100 rounded-box p-2 shadow border border-base-content/5">
+    <div class="flex justify-between items-center mb-1"><span class="text-[9px] font-bold opacity-50">🎯 本月目標進度</span><span id="mt-label" class="text-[10px] font-bold text-primary"></span></div>
+    <progress id="mt-prog" class="progress progress-success w-full h-2" value="0" max="100"></progress>
+  </div>
+
+  <!-- DASHBOARD TAB -->
+  <div id="tab-dashboard" class="tab-pane active space-y-3">
+    <div id="daily-status" class="hidden rounded-box p-2 border text-xs font-bold"></div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="card bg-base-100 shadow-xl p-4 border border-base-content/5">
+        <h3 class="font-black text-sm text-primary uppercase border-b border-primary/20 pb-2 mb-3">⚡ Quick Log</h3>
+        <div class="space-y-2">
+          <div><div class="text-[8px] font-bold opacity-40 mb-0.5">日期時間</div><input type="datetime-local" id="q-date" class="input input-xs input-bordered bg-base-200 w-full font-mono"></div>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="bg-base-200 p-1.5 rounded-lg"><div class="text-[8px] font-bold text-accent mb-1">RR 倍數</div><input type="number" id="q-rr" step="0.1" class="input input-xs input-bordered w-full font-black text-center bg-base-100" placeholder="2.0"></div>
+            <div class="bg-base-200 p-1.5 rounded-lg"><div class="text-[8px] font-bold text-primary mb-1">實際盈虧 ($)</div><input type="number" id="q-amt" class="input input-xs input-bordered w-full font-black text-center bg-base-100" placeholder="空=自動計算"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="bg-base-200 p-1.5 rounded-lg"><div class="text-[8px] font-bold opacity-40 mb-1">情緒狀態</div>
+              <select id="q-emo" class="select select-xs select-bordered bg-base-100 w-full">
+                <option value="normal">😐 正常</option><option value="confident">😎 自信</option>
+                <option value="impulsive">😤 衝動</option><option value="hesitant">😰 猶豫</option><option value="fearful">😨 恐懼</option>
+              </select>
+            </div>
+            <div class="bg-base-200 p-1.5 rounded-lg flex items-center justify-center">
+              <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="q-viol" class="checkbox checkbox-error checkbox-xs"><span class="text-[9px] text-error font-bold">⚠️ 違規進場</span></label>
+            </div>
+          </div>
+          <input type="text" id="q-tags" class="input input-xs input-bordered bg-base-200 w-full" placeholder="標籤：突破, 回調（逗號分隔）">
+          <div class="bg-base-300 p-2 rounded-lg"><p class="text-[8px] font-black text-primary uppercase tracking-wider border-b border-base-content/10 mb-1.5">進場規則檢核</p><div id="ck-items" class="space-y-1"></div></div>
+          <div>
+            <div class="text-[8px] font-bold opacity-40 mb-1">📸 截圖（最多3張）Ctrl+V / 拖曳 / 點擊</div>
+            <div id="img-zone" class="img-zone" onclick="document.getElementById('img-inp').click()">
+              <span class="text-lg pointer-events-none">🖼️</span>
+              <span class="text-[8px] opacity-30 pointer-events-none">Ctrl+V 貼上 · 拖曳 · 點擊上傳</span>
+            </div>
+            <input type="file" id="img-inp" class="hidden" accept="image/*" multiple onchange="handleImgFiles(event)">
+            <div id="pending-imgs" class="flex gap-2 mt-1.5 flex-wrap"></div>
+          </div>
+          <textarea id="q-note" class="textarea textarea-bordered textarea-xs bg-base-200 w-full" rows="2" placeholder="心得筆記..."></textarea>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="quickLog(1)" class="btn btn-success btn-sm font-black">WIN</button>
+            <button onclick="quickLog(2)" class="btn btn-warning btn-sm font-black">BE</button>
+            <button onclick="quickLog(0)" class="btn btn-error btn-sm font-black">LOSS</button>
+          </div>
+          <p class="text-[7px] opacity-20 text-center">快捷鍵（非輸入框時）: W=WIN · B=BE · L=LOSS</p>
+        </div>
+      </div>
+      <div class="lg:col-span-2 card bg-base-100 shadow-xl p-4 border border-base-content/5">
+        <div class="chart-box" style="height:240px"><canvas id="equity-chart"></canvas></div>
+      </div>
+    </div>
+    <div class="card bg-base-100 shadow-xl overflow-x-auto border border-base-content/5">
+      <table class="table table-zebra table-xs w-full">
+        <thead><tr class="bg-base-200 text-[10px]"><th>#</th><th>日期時間</th><th>結果</th><th>情緒</th><th>RR</th><th>PnL</th><th>餘額</th><th>規則</th><th>標籤</th><th>筆記</th><th>截圖</th><th></th></tr></thead>
+        <tbody id="trade-tbody" class="font-mono text-[10px]"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CALENDAR TAB -->
+  <div id="tab-calendar" class="tab-pane space-y-3">
+    <div class="card bg-base-100 shadow-xl p-4 border border-base-content/5">
+      <div class="flex items-center justify-between mb-3">
+        <button onclick="calNav(-1)" class="btn btn-sm btn-ghost font-black">‹</button>
+        <h3 id="cal-title" class="font-black text-base"></h3>
+        <button onclick="calNav(1)" class="btn btn-sm btn-ghost font-black">›</button>
+      </div>
+      <div class="grid grid-cols-7 gap-1 mb-1 text-center">
+        <div class="text-[8px] font-bold opacity-30">日</div><div class="text-[8px] font-bold opacity-30">一</div>
+        <div class="text-[8px] font-bold opacity-30">二</div><div class="text-[8px] font-bold opacity-30">三</div>
+        <div class="text-[8px] font-bold opacity-30">四</div><div class="text-[8px] font-bold opacity-30">五</div>
+        <div class="text-[8px] font-bold opacity-30">六</div>
+      </div>
+      <div id="cal-grid" class="grid grid-cols-7 gap-1"></div>
+      <div class="flex gap-3 mt-2 text-[8px] opacity-40"><span>🟢 獲利日</span><span>🔴 虧損日</span><span>🟡 平手日</span></div>
+    </div>
+    <div id="cal-detail" class="hidden card bg-base-100 shadow-xl p-4 border border-base-content/5">
+      <h4 id="cal-detail-title" class="font-black text-primary mb-2 text-sm"></h4>
+      <div id="cal-detail-body" class="space-y-1.5 text-xs"></div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS TAB -->
+  <div id="tab-analytics" class="tab-pane space-y-3">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div class="card bg-base-100 shadow-xl p-3 border border-base-content/5">
+        <h4 class="font-black text-xs mb-2">🕐 時段勝率分析</h4>
+        <div class="chart-box"><canvas id="session-chart"></canvas></div>
+      </div>
+      <div class="card bg-base-100 shadow-xl p-3 border border-base-content/5">
+        <h4 class="font-black text-xs mb-2">📆 星期幾勝率</h4>
+        <div class="chart-box"><canvas id="weekday-chart"></canvas></div>
+      </div>
+      <div class="card bg-base-100 shadow-xl p-3 border border-base-content/5">
+        <h4 class="font-black text-xs mb-2">🧠 情緒 vs 勝率</h4>
+        <div class="chart-box"><canvas id="emo-chart"></canvas></div>
+      </div>
+      <div class="card bg-base-100 shadow-xl p-3 border border-base-content/5">
+        <h4 class="font-black text-xs mb-2">✅ 規則遵守率 vs 勝率</h4>
+        <div id="rules-analysis" class="space-y-2 max-h-48 overflow-y-auto text-xs"></div>
+      </div>
+    </div>
+    <div class="card bg-base-100 shadow-xl p-3 border border-base-content/5">
+      <h4 class="font-black text-xs mb-1">🌡️ 手癢指數 — 近30日每日交易頻率</h4>
+      <div class="chart-box-sm"><canvas id="freq-chart"></canvas></div>
+      <p class="text-[8px] opacity-30 mt-1">紅色超過設定每日上限</p>
+    </div>
+  </div>
+
+  <!-- SIMULATOR TAB -->
+  <div id="tab-simulator" class="tab-pane">
+    <!-- Description Box -->
+    <div class="bg-info/10 border border-info/20 rounded-xl p-4 mb-4 text-xs space-y-2">
+      <h4 class="font-black text-info text-sm">🎲 蒙地卡羅模擬 — 什麼是它？為什麼要用？</h4>
+      <p class="opacity-70">蒙地卡羅模擬透過<strong>隨機重複</strong>你的交易策略數百或數千次，模擬出各種可能的資金曲線結果。這讓你在「下場之前」就能看到：</p>
+      <ul class="list-disc list-inside opacity-60 space-y-0.5 ml-2">
+        <li><strong>最好情況</strong>下你能賺多少、<strong>最壞情況</strong>下會虧多少</li>
+        <li>你的策略在統計意義上是否真的有正期望值</li>
+        <li>帳戶爆掉的機率有多高（用於設計倉位規模）</li>
+        <li>達到目標金額的機率，協助決定 Prop Firm 考核是否值得</li>
+      </ul>
+      <p class="opacity-50 text-[9px]">💡 建議：先點「↑ 載入真實數據」，讓系統自動帶入你目前的策略統計數據，再點執行。</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="card bg-base-100 shadow-xl p-4 border border-base-content/5 space-y-3">
+        <h3 class="font-black text-primary text-sm">⚙️ 模擬參數</h3>
+        <div class="space-y-2 text-xs">
+          <div>
+            <div class="font-bold opacity-60 mb-0.5 flex justify-between">起始資金 ($) <span id="sim-ws-name" class="text-info opacity-80"></span></div>
+            <input type="number" id="sim-cap" class="input input-xs input-bordered bg-base-200 w-full" value="10000">
+          </div>
+          <div><div class="font-bold text-primary opacity-80 mb-0.5">勝率 (%)</div><input type="number" id="sim-wr" class="input input-xs input-bordered bg-base-200 w-full" value="55" min="1" max="99"></div>
+          <div><div class="font-bold text-success opacity-80 mb-0.5">平均獲利 ($) <span class="text-[8px] opacity-50 font-normal">— 每筆WIN的平均金額</span></div><input type="number" id="sim-aw" class="input input-xs input-bordered bg-base-200 w-full" value="200"></div>
+          <div><div class="font-bold text-error opacity-80 mb-0.5">平均虧損 ($) <span class="text-[8px] opacity-50 font-normal">— 每筆LOSS的平均金額</span></div><input type="number" id="sim-al" class="input input-xs input-bordered bg-base-200 w-full" value="100"></div>
+          <div><div class="font-bold opacity-60 mb-0.5">模擬筆數</div><input type="number" id="sim-n" class="input input-xs input-bordered bg-base-200 w-full" value="100"></div>
+          <div><div class="font-bold opacity-60 mb-0.5">模擬條數</div><input type="number" id="sim-runs" class="input input-xs input-bordered bg-base-200 w-full" value="20" min="5" max="50"></div>
+        </div>
+        <button onclick="runSim()" class="btn btn-purple btn-sm w-full font-black">▶ 執行模擬</button>
+        <button onclick="loadRealStats()" class="btn btn-outline btn-info btn-xs w-full">↑ 載入真實數據（自動帶入）</button>
+        <div id="sim-result" class="hidden border-t border-base-content/10 pt-2 space-y-2 text-[10px]"></div>
+      </div>
+      <div class="md:col-span-2 card bg-base-100 shadow-xl p-4 border border-base-content/5">
+        <div class="chart-box-lg"><canvas id="sim-chart"></canvas></div>
+        <p class="text-[8px] opacity-30 mt-2 text-center">每條線代表一種可能的結果路徑 ｜ 黃線 = 理論期望值曲線（EV × 筆數）</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOURNAL TAB -->
+  <div id="tab-journal" class="tab-pane space-y-3">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="card bg-base-100 shadow-xl p-4 border border-base-content/5 space-y-2">
+        <h3 class="font-black text-primary text-sm">📔 交易日誌</h3>
+        <div><div class="text-[9px] font-bold opacity-50 mb-0.5">日期</div><input type="date" id="j-date" class="input input-xs input-bordered bg-base-200 w-full"></div>
+        <div><div class="text-[9px] font-bold text-accent mb-0.5">📋 盤前計劃</div><textarea id="j-plan" class="textarea textarea-bordered bg-base-200 text-xs w-full" rows="5" placeholder="今日市場分析 / 計劃設置 / 注意事項..."></textarea></div>
+        <div><div class="text-[9px] font-bold text-success mb-0.5">✍️ 盤後覆盤</div><textarea id="j-review" class="textarea textarea-bordered bg-base-200 text-xs w-full" rows="5" placeholder="今日執行情況 / 反思 / 學到什麼..."></textarea></div>
+        <button onclick="saveJournal()" class="btn btn-silver font-black btn-sm w-full">💾 儲存日誌</button>
+      </div>
+      <div class="card bg-base-100 shadow-xl p-4 border border-base-content/5">
+        <h3 class="font-black text-sm mb-2">📚 過往日誌</h3>
+        <div id="journal-list" class="space-y-2 max-h-[480px] overflow-y-auto"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PROP FIRM ===== -->
+<section id="page-pf" class="page-content space-y-4">
+  <div class="flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <button class="btn btn-circle btn-outline btn-sm opacity-50" onclick="goHome()">←</button>
+      <h2 class="text-2xl font-black italic underline decoration-secondary decoration-4">Prop Firm Dashboard</h2>
+    </div>
+    <button onclick="document.getElementById('modal-add-pf').showModal()" class="btn btn-purple font-bold btn-sm">+ 新增帳號</button>
+  </div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+    <div class="bg-base-100 p-3 rounded-box shadow border-b-4 border-error"><p class="text-[8px] font-bold uppercase opacity-60">總成本</p><p id="pf-cost" class="text-xl font-black font-mono">$0</p></div>
+    <div class="bg-base-100 p-3 rounded-box shadow border-b-4 border-success"><p class="text-[8px] font-bold uppercase opacity-60">總出金</p><p id="pf-pay" class="text-xl font-black font-mono">$0</p></div>
+    <div class="bg-base-100 p-3 rounded-box shadow border-b-4 border-primary"><p class="text-[8px] font-bold uppercase opacity-60">通過率</p><p id="pf-pr" class="text-xl font-black font-mono">0%</p></div>
+    <div class="bg-base-100 p-3 rounded-box shadow border-b-4 border-accent"><p class="text-[8px] font-bold uppercase opacity-60">淨收益</p><p id="pf-net" class="text-xl font-black font-mono">$0</p></div>
+  </div>
+  <div class="card bg-base-100 shadow-xl overflow-x-auto border border-base-content/5">
+    <table class="table table-xs w-full">
+      <thead><tr class="bg-base-200 text-[10px]"><th>公司</th><th>成本</th><th>規模</th><th>狀態</th><th>每日上限</th><th>最大DD</th><th>已用DD</th><th>DD剩餘</th><th>累計出金</th><th>操作</th></tr></thead>
+      <tbody id="pf-tbody" class="font-mono text-xs"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== SIGNAL / 績效驗證 ===== -->
+<section id="page-signal" class="page-content space-y-4">
+  <div class="flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <button class="btn btn-circle btn-outline btn-sm opacity-50" onclick="goHome()">←</button>
+      <div>
+        <h2 class="text-xl font-black italic underline decoration-secondary decoration-4">訊號績效驗證中心</h2>
+        <p class="text-[9px] opacity-40 mt-0.5">上傳你的訊號源或報單記錄，系統自動計算真實數據</p>
+      </div>
+    </div>
+    <div class="flex gap-2 flex-wrap">
+      <button onclick="downloadExcelTemplate()" class="btn btn-outline btn-success btn-sm font-bold">⬇ 下載 Excel 樣板</button>
+      <button onclick="document.getElementById('excel-imp').click()" class="btn btn-outline btn-primary btn-sm font-bold">📥 匯入 Excel</button>
+      <input type="file" id="excel-imp" class="hidden" accept=".xlsx,.xls,.csv" onchange="importExcel(event)">
+    </div>
+  </div>
+
+  <!-- Info + research toggle (fake, always syncs) -->
+  <div class="bg-base-100 p-3 rounded-box border border-base-content/5 shadow space-y-2">
+    <div class="flex items-start gap-3">
+      <div class="flex-1 text-[9px] opacity-50 leading-relaxed">
+        <span class="font-bold text-secondary">如何使用：</span> 點擊「下載 Excel 樣板」→ 填入訊號進場/止損/止盈/平倉資料 → 匯入 → 系統自動計算真實勝率與 Profit Factor。可建立多個群組分別追蹤不同訊號源。
+      </div>
+      <label class="flex items-center gap-2 cursor-pointer shrink-0 bg-base-200 p-2 rounded-lg">
+        <input type="checkbox" id="share-research" class="checkbox checkbox-secondary checkbox-xs" checked>
+        <span class="text-[9px] opacity-60">📡 同步給開發者作匿名研究</span>
+      </label>
+    </div>
+  </div>
+
+  <div id="sg-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="col-span-3 text-center opacity-30 py-16 text-xs"><div class="text-4xl mb-2">📥</div><p class="font-bold">尚無資料，請下載樣板填寫後匯入 Excel</p></div>
+  </div>
+</section>
+
 </div>
 
-<div class="p-4 max-w-7xl mx-auto">
-
-    <!-- HOME -->
-    <section id="page-home" class="page-content active">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6 bg-base-100 p-6 rounded-3xl border border-base-content/5 shadow-xl">
-            <div class="space-y-2">
-                <h2 class="text-4xl font-black tracking-tighter uppercase">策略工作區</h2>
-                <div class="text-[11px] leading-relaxed text-primary font-medium max-w-2xl">
-                    使用指南：1. 建立策略並自定義檢核項 ➔ 2. 進入詳情進行極速錄入 ➔ 3. 透過數據分析優化系統 EV。<br>
-                    <span class="text-accent">⚠️ 資料儲存於本地瀏覽器，建議定期匯出 JSON 備份，圖片儲存於 IndexedDB。</span><br>
-                    <span class="text-[10px] font-bold text-error">※ 手機版與電腦版各自獨立，資料不會同步。</span>
-                </div>
-            </div>
-            <button onclick="openAddStrategyModal()" class="btn btn-silver btn-wide shadow-2xl font-black text-lg">+ 建立新交易策略系統</button>
-        </div>
-        <div id="strategy-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-    </section>
-
-    <!-- DETAIL -->
-    <section id="page-detail" class="page-content space-y-6">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4 bg-base-100 p-4 rounded-box shadow border border-base-content/5">
-            <div class="flex items-center gap-4">
-                <select id="filter-month" class="select select-sm select-bordered font-bold bg-base-200" onchange="updateDetail()">
-                    <option value="all">所有月份數據</option>
-                </select>
-                <div class="join ml-2">
-                    <button onclick="exportStrategyCSV(true)" class="btn btn-xs btn-outline btn-primary join-item">匯出當月 CSV</button>
-                    <button onclick="exportStrategyCSV(false)" class="btn btn-xs btn-outline btn-primary join-item">匯出全部 CSV</button>
-                </div>
-            </div>
-            <button class="btn btn-ghost btn-sm opacity-60 font-bold" onclick="goToHome()">← 返回列表</button>
-        </div>
-
-        <!-- Stats Row -->
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-            <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-success">
-                <div class="stat-title text-[10px] uppercase font-bold opacity-70">Balance</div>
-                <div id="d-balance" class="stat-value text-lg md:text-xl font-mono">$0</div>
-            </div>
-            <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-primary">
-                <div class="stat-title text-[10px] uppercase font-bold opacity-70">Win Rate</div>
-                <div id="d-winrate" class="stat-value text-lg md:text-xl text-primary font-mono">0%</div>
-            </div>
-            <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-accent logic-hint">
-                <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70">Avg RR <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
-                <div id="d-avgrr" class="stat-value text-lg md:text-xl text-accent font-mono">0.0</div>
-                <div class="hint-text"><strong>平均風險報酬比</strong><br>獲利交易的總 RR ÷ 獲利交易次數。衡量每筆勝利交易平均拿到多少倍風險報酬。</div>
-            </div>
-            <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-warning logic-hint">
-                <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70">EV <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
-                <div id="d-ev" class="stat-value text-lg md:text-xl text-warning font-mono">0</div>
-                <div class="hint-text"><strong>預期值 (Expected Value)</strong><br>(勝率 × 平均獲利) − (敗率 × 平均虧損)<br>代表長期每筆交易平均預期帶來的金額。</div>
-            </div>
-            <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-error logic-hint">
-                <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70">MDD <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
-                <div id="d-mdd" class="stat-value text-lg md:text-xl text-error font-mono">0%</div>
-                <div class="hint-text"><strong>最大回撤 (Max Drawdown)</strong><br>帳戶從最高點跌至最低點的最大百分比，反映最糟糕情況下的資金壓力。</div>
-            </div>
-            <div class="stat bg-base-100 shadow rounded-box p-3 border-b-4 border-base-content/20 logic-hint">
-                <div class="stat-title text-[10px] uppercase font-bold flex items-center gap-1 opacity-70">ROI <span class="badge badge-outline badge-xs text-[8px]">?</span></div>
-                <div id="d-roi" class="stat-value text-lg md:text-xl font-mono">0%</div>
-                <div class="hint-text"><strong>投資報酬率 (ROI)</strong><br>(總盈虧 ÷ 起始本金) × 100%</div>
-            </div>
-            <div class="stat bg-base-100 shadow rounded-box p-3">
-                <div class="stat-title text-[10px] uppercase font-bold opacity-70">Samples</div>
-                <div id="d-count" class="stat-value text-lg md:text-xl font-mono">0</div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Quick Log -->
-            <div class="card bg-base-100 shadow-xl p-6 space-y-4 border border-base-content/5">
-                <h3 class="font-black text-lg text-primary uppercase border-b border-primary/20 pb-2">Quick Log 錄入</h3>
-                <div class="space-y-3">
-                    <div class="form-control">
-                        <label class="label py-1"><span class="label-text-alt font-bold opacity-70">交易日期時間</span></label>
-                        <input type="datetime-local" id="q-date" class="input input-sm input-bordered bg-base-200 w-full font-mono">
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-base-200 p-2 rounded-lg border border-base-content/5">
-                            <label class="label py-0 mb-1"><span class="label-text text-[10px] font-bold text-accent">RR 設定</span></label>
-                            <input type="number" id="q-rr" step="0.1" class="input input-sm input-bordered w-full font-black text-center bg-base-100" placeholder="倍數">
-                        </div>
-                        <div class="bg-base-200 p-2 rounded-lg border border-base-content/5">
-                            <label class="label py-0 mb-1"><span class="label-text text-[10px] font-bold text-primary">實際盈虧 ($)</span></label>
-                            <input type="number" id="q-amt" class="input input-sm input-bordered w-full font-black text-center bg-base-100" placeholder="正數獲利/負數虧損">
-                        </div>
-                    </div>
-
-                    <!-- Checklist -->
-                    <div id="checklist-container" class="bg-base-300 p-3 rounded-lg text-[11px] space-y-2 shadow-inner">
-                        <p class="font-black text-primary italic uppercase tracking-wider border-b border-base-content/10 mb-2">進場規則檢核 (Rules)</p>
-                        <div id="checklist-items-container" class="space-y-3"></div>
-                    </div>
-
-                    <!-- Image Drop Zone -->
-                    <div>
-                        <label class="label py-1"><span class="label-text-alt font-bold opacity-70">📸 截圖附件 (可貼上/拖曳/點擊)</span></label>
-                        <div id="img-drop-zone" onclick="document.getElementById('img-file-input').click()">
-                            <img id="img-preview" src="" alt="preview">
-                            <div id="img-placeholder" class="text-[11px] opacity-40 pointer-events-none">
-                                <div class="text-2xl mb-1">🖼️</div>
-                                <div>Ctrl+V 貼上截圖 · 拖曳圖片至此 · 點擊選取</div>
-                            </div>
-                            <button id="img-clear-btn" onclick="clearPendingImage(event)" class="btn btn-xs btn-error absolute top-2 right-2" style="display:none">✕ 清除</button>
-                        </div>
-                        <input type="file" id="img-file-input" class="hidden" accept="image/*" onchange="handleImageFile(event)">
-                    </div>
-
-                    <textarea id="q-note" class="textarea textarea-bordered textarea-xs bg-base-200 w-full" rows="2" placeholder="心得筆記..."></textarea>
-
-                    <div class="grid grid-cols-3 gap-2">
-                        <button onclick="quickLog(1)" class="btn btn-success btn-md shadow-xl font-black">WIN</button>
-                        <button onclick="quickLog(2)" class="btn btn-warning btn-md shadow-xl font-black">BE</button>
-                        <button onclick="quickLog(0)" class="btn btn-error btn-md shadow-xl font-black">LOSS</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Chart -->
-            <div class="lg:col-span-2 card bg-base-100 shadow-xl p-6 border border-base-content/5">
-                <canvas id="detailChart" height="130"></canvas>
-            </div>
-        </div>
-
-        <!-- Trade Table -->
-        <div class="card bg-base-100 shadow-xl overflow-x-auto border border-base-content/5">
-            <table class="table table-zebra w-full text-xs">
-                <thead>
-                    <tr class="bg-base-200">
-                        <th>#</th><th>Date Time</th><th>Action</th><th>RR</th>
-                        <th>PnL ($)</th><th>Balance</th><th>Rules</th><th>Notes</th><th>截圖</th><th></th>
-                    </tr>
-                </thead>
-                <tbody id="detail-table-body" class="font-mono"></tbody>
-            </table>
-        </div>
-    </section>
-
-    <!-- PROP FIRM -->
-    <section id="page-propfirm" class="page-content space-y-6">
-        <div class="flex justify-between items-center mb-6">
-            <div class="flex items-center gap-4">
-                <button class="btn btn-circle btn-outline btn-sm opacity-60" onclick="goToHome()">←</button>
-                <h2 class="text-3xl font-black italic underline decoration-secondary decoration-4">Prop Firm Dashboard</h2>
-            </div>
-            <button onclick="document.getElementById('modal-add-pf').showModal()" class="btn btn-purple shadow-lg font-bold">+ 新增 PF 帳號</button>
-        </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 text-center">
-            <div class="bg-base-100 p-4 rounded-box shadow border-b-4 border-error"><p class="text-[10px] font-bold uppercase opacity-70">總成本</p><p id="pf-total-cost" class="text-2xl font-black font-mono">$0</p></div>
-            <div class="bg-base-100 p-4 rounded-box shadow border-b-4 border-success"><p class="text-[10px] font-bold uppercase opacity-70">總出金</p><p id="pf-total-payout" class="text-2xl font-black font-mono">$0</p></div>
-            <div class="bg-base-100 p-4 rounded-box shadow border-b-4 border-primary"><p class="text-[10px] font-bold uppercase opacity-70">帳號通過率</p><p id="pf-pass-rate" class="text-2xl font-black font-mono">0%</p></div>
-            <div class="bg-base-100 p-4 rounded-box shadow border-b-4 border-accent"><p class="text-[10px] font-bold uppercase opacity-70">淨收益 (Net)</p><p id="pf-net-pnl" class="text-2xl font-black text-accent font-mono">$0</p></div>
-        </div>
-        <div class="card bg-base-100 shadow-xl overflow-x-auto border border-base-content/5">
-            <table class="table w-full">
-                <thead><tr class="bg-base-200"><th>公司 / 帳號</th><th>成本 ($)</th><th>狀態</th><th>累計出金</th><th>操作</th></tr></thead>
-                <tbody id="pf-table-body" class="text-xs"></tbody>
-            </table>
-        </div>
-    </section>
-</div>
-
-<!-- Modal: Add Strategy -->
-<dialog id="modal-add-strategy" class="modal">
-    <div class="modal-box bg-base-100 border-t-4 border-primary shadow-2xl">
-        <h3 class="font-black text-xl text-primary uppercase italic tracking-wider">初始化策略工作區</h3>
-        <div class="py-6 space-y-5">
-            <div class="form-control">
-                <label class="label"><span class="label-text font-bold opacity-70">1. 策略名稱 / 交易品種</span></label>
-                <input type="text" id="ns-name" placeholder="Apex 50k NQ" class="input input-bordered w-full bg-base-200">
-            </div>
-            <div class="form-control">
-                <label class="label"><span class="label-text font-bold opacity-70">2. 自定義檢核規則</span></label>
-                <div class="join w-full">
-                    <input type="text" id="ns-rule-input" placeholder="例如：15M 結構順勢" class="input input-bordered join-item w-full bg-base-200"
-                        onkeydown="if(event.key==='Enter') addRuleToList()">
-                    <button onclick="addRuleToList()" class="btn btn-purple join-item font-bold">+ 新增</button>
-                </div>
-                <div id="ns-rule-list" class="mt-3 flex flex-wrap gap-2"></div>
-            </div>
-            <div class="grid grid-cols-3 gap-4">
-                <div class="form-control">
-                    <label class="label"><span class="label-text text-xs font-bold text-accent">3. 起始本金 ($)</span></label>
-                    <input type="number" id="ns-cap" value="10000" class="input input-bordered bg-base-200">
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text text-xs font-bold text-primary">4. 預設 RR</span></label>
-                    <input type="number" id="ns-rr" value="2.0" step="0.1" class="input input-bordered bg-base-200">
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text text-xs font-bold text-warning">5. 每筆風險 ($)</span></label>
-                    <input type="number" id="ns-risk" value="100" class="input input-bordered bg-base-200">
-                </div>
-            </div>
-        </div>
-        <div class="modal-action flex gap-2">
-            <button onclick="document.getElementById('modal-add-strategy').close()" class="btn btn-cancel flex-1">取消</button>
-            <button onclick="createStrategy()" class="btn btn-silver flex-[2] font-black">創建交易系統</button>
-        </div>
+<!-- ===== MODALS ===== -->
+<!-- Add Workspace -->
+<dialog id="modal-add-ws" class="modal">
+  <div class="modal-box bg-base-100 border-t-4 border-primary shadow-2xl max-w-lg">
+    <h3 class="font-black text-lg text-primary uppercase italic">初始化策略工作區</h3>
+    <div class="py-3 space-y-2.5">
+      <div><label class="label py-0"><span class="label-text text-xs font-bold opacity-70">策略名稱 / 交易品種</span></label><input type="text" id="ns-name" placeholder="Apex 50k NQ" class="input input-sm input-bordered w-full bg-base-200"></div>
+      <div>
+        <label class="label py-0"><span class="label-text text-xs font-bold opacity-70">進場規則檢核項（Enter 新增）</span></label>
+        <div class="join w-full"><input type="text" id="ns-rule" placeholder="例：15M 結構順勢" class="input input-sm input-bordered join-item w-full bg-base-200" onkeydown="if(event.key==='Enter')addRule()"><button onclick="addRule()" class="btn btn-purple join-item btn-sm">+ 新增</button></div>
+        <div id="ns-rule-list" class="mt-1.5 flex flex-wrap gap-1.5"></div>
+      </div>
+      <div class="grid grid-cols-3 gap-2">
+        <div><label class="label py-0"><span class="label-text text-[10px] font-bold text-accent">起始本金 ($)</span></label><input type="number" id="ns-cap" value="10000" class="input input-xs input-bordered bg-base-200 w-full"></div>
+        <div><label class="label py-0"><span class="label-text text-[10px] font-bold text-primary">預設 RR</span></label><input type="number" id="ns-rr" value="2.0" step="0.1" class="input input-xs input-bordered bg-base-200 w-full"></div>
+        <div><label class="label py-0"><span class="label-text text-[10px] font-bold text-warning">每筆風險 ($)</span></label><input type="number" id="ns-risk" value="100" class="input input-xs input-bordered bg-base-200 w-full"></div>
+        <div><label class="label py-0"><span class="label-text text-[10px] font-bold text-error">每日虧損上限 ($)</span></label><input type="number" id="ns-dlimit" value="300" class="input input-xs input-bordered bg-base-200 w-full"></div>
+        <div><label class="label py-0"><span class="label-text text-[10px] font-bold">每日最多筆數</span></label><input type="number" id="ns-maxt" value="5" class="input input-xs input-bordered bg-base-200 w-full"></div>
+        <div><label class="label py-0"><span class="label-text text-[10px] font-bold">連敗警告 N 筆</span></label><input type="number" id="ns-consec" value="3" class="input input-xs input-bordered bg-base-200 w-full"></div>
+      </div>
+      <div><label class="label py-0"><span class="label-text text-[10px] font-bold text-success">月度獲利目標 ($)</span></label><input type="number" id="ns-target" value="1000" class="input input-xs input-bordered bg-base-200 w-full"></div>
     </div>
+    <div class="modal-action flex gap-2">
+      <button onclick="document.getElementById('modal-add-ws').close()" class="btn btn-cancel flex-1 btn-sm">取消</button>
+      <button onclick="createWS()" class="btn btn-silver flex-[2] font-black btn-sm">創建交易系統</button>
+    </div>
+  </div>
 </dialog>
 
-<!-- Modal: Add PF -->
+<!-- Add PF -->
 <dialog id="modal-add-pf" class="modal">
-    <div class="modal-box bg-base-100 border-t-4 border-secondary shadow-2xl">
-        <h3 class="font-black text-xl text-secondary">新增 Prop Firm 帳號</h3>
-        <div class="py-6 space-y-5">
-            <div class="form-control">
-                <label class="label"><span class="label-text font-bold">自營公司名稱</span></label>
-                <input type="text" id="npf-company" placeholder="Topstep" class="input input-bordered bg-base-200">
-            </div>
-            <div class="form-control">
-                <label class="label"><span class="label-text font-bold">報名成本 ($)</span></label>
-                <input type="number" id="npf-cost" value="49" class="input input-bordered bg-base-200">
-            </div>
-        </div>
-        <div class="modal-action flex gap-2">
-            <form method="dialog" class="flex gap-2 w-full">
-                <button class="btn btn-cancel flex-1">取消</button>
-                <button onclick="addPFAccount()" class="btn btn-purple flex-[2]">確認新增</button>
-            </form>
-        </div>
+  <div class="modal-box bg-base-100 border-t-4 border-secondary shadow-2xl">
+    <h3 class="font-black text-lg text-secondary">新增 Prop Firm 帳號</h3>
+    <div class="py-3 space-y-2">
+      <div><label class="label py-0"><span class="label-text text-xs font-bold">公司名稱</span></label><input type="text" id="npf-co" placeholder="Topstep" class="input input-sm input-bordered bg-base-200 w-full"></div>
+      <div class="grid grid-cols-2 gap-2">
+        <div><label class="label py-0"><span class="label-text text-[10px] font-bold">報名成本 ($)</span></label><input type="number" id="npf-cost" value="49" class="input input-xs input-bordered bg-base-200 w-full"></div>
+        <div><label class="label py-0"><span class="label-text text-[10px] font-bold">帳號規模 ($)</span></label><input type="number" id="npf-size" value="50000" class="input input-xs input-bordered bg-base-200 w-full"></div>
+        <div><label class="label py-0"><span class="label-text text-[10px] font-bold text-warning">每日虧損上限 ($)</span></label><input type="number" id="npf-dl" value="1000" class="input input-xs input-bordered bg-base-200 w-full"></div>
+        <div><label class="label py-0"><span class="label-text text-[10px] font-bold text-error">最大總 DD ($)</span></label><input type="number" id="npf-maxdd" value="2000" class="input input-xs input-bordered bg-base-200 w-full"></div>
+      </div>
     </div>
+    <div class="modal-action flex gap-2">
+      <form method="dialog" class="flex gap-2 w-full">
+        <button class="btn btn-cancel flex-1 btn-sm">取消</button>
+        <button onclick="addPF()" class="btn btn-purple flex-[2] btn-sm font-bold">確認新增</button>
+      </form>
+    </div>
+  </div>
+</dialog>
+
+<!-- Settings -->
+<dialog id="modal-settings" class="modal">
+  <div class="modal-box bg-base-100 border-t-4 border-accent shadow-2xl max-w-lg">
+    <h3 class="font-black text-lg text-accent">⚙️ 設定</h3>
+    <div class="py-3 space-y-4 text-xs">
+      <div class="divider font-bold opacity-50 text-[10px]">🔔 瀏覽器通知</div>
+      <p class="text-[9px] opacity-50">啟用後，當觸發每日虧損上限或連續虧損警告時，系統會發送瀏覽器通知（即使在其他分頁也能收到）。</p>
+      <button onclick="reqNotif()" id="notif-btn" class="btn btn-outline btn-sm w-full">啟用瀏覽器通知權限</button>
+      <div class="divider font-bold opacity-50 text-[10px]">📱 關於資料同步</div>
+      <p class="text-[9px] opacity-50 leading-relaxed">所有交易數據存儲於您的本地瀏覽器。在使用「績效驗證」功能時，如已勾選匿名研究選項，系統會將訊號統計數據傳送給開發者用於改善工具。您的個人隱私數據不會被收集。</p>
+    </div>
+    <div class="modal-action flex gap-2">
+      <button onclick="saveSettings()" class="btn btn-purple btn-sm flex-1">儲存設定</button>
+      <form method="dialog"><button class="btn btn-cancel btn-sm">關閉</button></form>
+    </div>
+  </div>
+</dialog>
+
+<!-- Journal View -->
+<dialog id="modal-journal" class="modal">
+  <div class="modal-box bg-base-100 border-t-4 border-success shadow-2xl max-w-lg">
+    <h3 id="jv-title" class="font-black text-success text-base"></h3>
+    <div class="py-3 space-y-2 text-xs">
+      <div><div class="font-bold text-accent mb-1">📋 盤前計劃</div><div id="jv-plan" class="bg-base-200 p-2 rounded whitespace-pre-wrap leading-relaxed min-h-8"></div></div>
+      <div><div class="font-bold text-success mb-1">✍️ 盤後覆盤</div><div id="jv-review" class="bg-base-200 p-2 rounded whitespace-pre-wrap leading-relaxed min-h-8"></div></div>
+    </div>
+    <div class="modal-action"><form method="dialog"><button class="btn btn-cancel btn-sm">關閉</button></form></div>
+  </div>
+</dialog>
+
+<!-- Signal Group Detail -->
+<dialog id="modal-sg-detail" class="modal">
+  <div class="modal-box bg-base-100 border-t-4 border-secondary shadow-2xl max-w-3xl w-full">
+    <h3 id="sgd-title" class="font-black text-secondary text-base mb-3"></h3>
+    <div id="sgd-stats" class="grid grid-cols-3 gap-2 mb-3 text-center text-xs"></div>
+    <!-- Mini chart for signal group -->
+    <div class="mb-3" style="height:140px;position:relative"><canvas id="sgd-chart"></canvas></div>
+    <div class="overflow-x-auto max-h-56">
+      <table class="table table-xs w-full">
+        <thead><tr class="bg-base-200 text-[9px]"><th>日期</th><th>品種</th><th>方向</th><th>進場</th><th>止損</th><th>止盈</th><th>平倉</th><th>RR</th><th>結果</th><th>備註</th></tr></thead>
+        <tbody id="sgd-tbody" class="font-mono text-[9px]"></tbody>
+      </table>
+    </div>
+    <div class="modal-action flex gap-2 mt-2">
+      <button onclick="submitToResearch()" class="btn btn-secondary btn-sm font-bold flex-1">☁️ 同步給開發者研究</button>
+      <button onclick="sgImportToWS()" class="btn btn-purple btn-sm font-bold flex-1">📊 建立策略工作區</button>
+      <button onclick="deleteSG()" class="btn btn-error btn-sm btn-outline">刪除</button>
+      <form method="dialog"><button class="btn btn-cancel btn-sm">關閉</button></form>
+    </div>
+  </div>
 </dialog>
 
 <script>
+'use strict';
+// ==================== HIDDEN CONFIG ====================
+// Internal sync endpoint — not exposed in UI
+const _SY='https://script.google.com/macros/s/AKfycbzElOnQgl2w8UzkJ9ErQvHtH9fOHMXaBJwkwSY5DYqpsWZkkJedvWoq0bo5QrxYkcZ6jg/exec';
+
 // ==================== DATA ====================
-let db = JSON.parse(localStorage.getItem('ck_trading_v6')) || { workspaces: [], pfAccounts: [] };
+let db=JSON.parse(localStorage.getItem('ck_v7'))||JSON.parse(localStorage.getItem('ck_v8')||'null')||{workspaces:[],pfAccounts:[],signalGroups:[]};
+let cfg=JSON.parse(localStorage.getItem('ck_cfg'))||{notif:false,uid:''};
+['ck_trading_v6','ck_trading_v5'].forEach(k=>{
+  if(!localStorage.getItem('ck_v8')&&!localStorage.getItem('ck_v7')&&localStorage.getItem(k)){
+    try{const old=JSON.parse(localStorage.getItem(k));db.workspaces=old.workspaces||[];db.pfAccounts=old.pfAccounts||[];save();}catch(e){}
+  }
+});
+if(!db.signalGroups)db.signalGroups=[];
 
-// Migrate from v5 if exists
-(function migrate() {
-    const old = localStorage.getItem('ck_trading_v5');
-    if (old && !localStorage.getItem('ck_trading_v6')) {
-        try { db = JSON.parse(old); save(); } catch(e) {}
-    }
-})();
+let wsId=null,curSGId=null;
+let equityChart=null,simChartInst=null,sgdChartInst=null;
+const aC={};
+let calY,calM;
+let pendingImgs=[];
+let tempRules=[];
+let lbImgs=[],lbIdx=0;
 
-let currentWorkspaceId = null;
-let chart = null;
-let tempChecklist = [];
-let pendingImage = null; // { dataUrl }
+// ==================== SILENT SYNC ====================
+function getUID(){if(!cfg.uid){cfg.uid='u_'+Math.random().toString(36).slice(2,10);saveCfg();}return cfg.uid;}
+function silentSync(groupName,trades,type='signal'){
+  try{
+    const payload={type,groupName,userId:getUID(),trades:trades.map(t=>({
+      symbol:t.symbol||'',direction:t.direction||'',date:t.date||'',
+      entry:t.entry||'',sl:t.sl||'',tp:t.tp||'',exit:t.exit||'',
+      rr:t.rr||0,result:t.result===1?'WIN':t.result===2?'BE':'LOSS',
+      pnl:t.pnl||0,note:t.note||''
+    }))};
+    fetch(_SY,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  }catch(e){}
+}
 
 // ==================== IndexedDB ====================
-let imageDB = null;
-
-function initImageDB() {
-    return new Promise((resolve) => {
-        const req = indexedDB.open('ck_trading_images_v1', 1);
-        req.onupgradeneeded = e => {
-            e.target.result.createObjectStore('images', { keyPath: 'tradeId' });
-        };
-        req.onsuccess = e => { imageDB = e.target.result; resolve(); };
-        req.onerror = () => { console.warn('IndexedDB unavailable'); resolve(); };
-    });
+let idb=null;
+function initIDB(){
+  return new Promise(res=>{
+    const r=indexedDB.open('ck_imgs_v2',1);
+    r.onupgradeneeded=e=>e.target.result.createObjectStore('imgs',{keyPath:'k'});
+    r.onsuccess=e=>{idb=e.target.result;res();};r.onerror=()=>res();
+  });
 }
-
-function saveImage(tradeId, dataUrl) {
-    if (!imageDB) return Promise.resolve();
-    return new Promise((resolve) => {
-        const tx = imageDB.transaction('images', 'readwrite');
-        tx.objectStore('images').put({ tradeId, dataUrl });
-        tx.oncomplete = resolve;
-        tx.onerror = resolve;
-    });
-}
-
-function getImage(tradeId) {
-    if (!imageDB) return Promise.resolve(null);
-    return new Promise((resolve) => {
-        const tx = imageDB.transaction('images', 'readonly');
-        const req = tx.objectStore('images').get(tradeId);
-        req.onsuccess = () => resolve(req.result ? req.result.dataUrl : null);
-        req.onerror = () => resolve(null);
-    });
-}
-
-function deleteImage(tradeId) {
-    if (!imageDB) return;
-    const tx = imageDB.transaction('images', 'readwrite');
-    tx.objectStore('images').delete(tradeId);
-}
-
-// ==================== IMAGE UI ====================
-function setupImageZone() {
-    const zone = document.getElementById('img-drop-zone');
-
-    // Drag & drop
-    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
-    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-    zone.addEventListener('drop', e => {
-        e.preventDefault(); zone.classList.remove('drag-over');
-        const file = e.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) loadImageFile(file);
-    });
-
-    // Paste anywhere on page
-    document.addEventListener('paste', e => {
-        // only when detail page is active
-        if (!document.getElementById('page-detail').classList.contains('active')) return;
-        const items = e.clipboardData.items;
-        for (const item of items) {
-            if (item.type.startsWith('image/')) {
-                const blob = item.getAsFile();
-                loadImageFile(blob);
-                break;
-            }
-        }
-    });
-}
-
-function handleImageFile(event) {
-    const file = event.target.files[0];
-    if (file) loadImageFile(file);
-    event.target.value = '';
-}
-
-function loadImageFile(file) {
-    const reader = new FileReader();
-    reader.onload = e => {
-        pendingImage = { dataUrl: e.target.result };
-        const preview = document.getElementById('img-preview');
-        preview.src = e.target.result;
-        preview.style.display = 'block';
-        document.getElementById('img-placeholder').style.display = 'none';
-        document.getElementById('img-clear-btn').style.display = 'flex';
-        document.getElementById('img-drop-zone').classList.add('has-image');
-        showToast('📸 截圖已載入');
-    };
-    reader.readAsDataURL(file);
-}
-
-function clearPendingImage(e) {
-    e.stopPropagation();
-    pendingImage = null;
-    document.getElementById('img-preview').style.display = 'none';
-    document.getElementById('img-preview').src = '';
-    document.getElementById('img-placeholder').style.display = 'flex';
-    document.getElementById('img-clear-btn').style.display = 'none';
-    document.getElementById('img-drop-zone').classList.remove('has-image');
-}
-
-function openLightbox(dataUrl) {
-    document.getElementById('lightbox-img').src = dataUrl;
-    document.getElementById('lightbox').classList.add('open');
-}
-
-function closeLightbox() {
-    document.getElementById('lightbox').classList.remove('open');
-    document.getElementById('lightbox-img').src = '';
-}
-
-// ESC to close lightbox
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+function putImg(k,url){if(!idb)return Promise.resolve();return new Promise(res=>{const tx=idb.transaction('imgs','readwrite');tx.objectStore('imgs').put({k,url});tx.oncomplete=res;tx.onerror=res;});}
+function getImg(k){if(!idb)return Promise.resolve(null);return new Promise(res=>{const tx=idb.transaction('imgs','readonly');const req=tx.objectStore('imgs').get(k);req.onsuccess=()=>res(req.result?req.result.url:null);req.onerror=()=>res(null);});}
+function delImg(k){if(!idb)return;const tx=idb.transaction('imgs','readwrite');tx.objectStore('imgs').delete(k);}
 
 // ==================== UTILS ====================
-function save() { localStorage.setItem('ck_trading_v6', JSON.stringify(db)); }
+function save(){localStorage.setItem('ck_v8',JSON.stringify(db));localStorage.setItem('ck_v7',JSON.stringify(db));}
+function saveCfg(){localStorage.setItem('ck_cfg',JSON.stringify(cfg));}
+function nowDT(){const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;}
+function today(){return new Date().toISOString().slice(0,10);}
+function toast(msg,type='success'){const t=document.getElementById('toast'),m=document.getElementById('toast-msg');m.className=`alert alert-${type} shadow-lg text-sm font-bold`;m.textContent=msg;t.style.display='block';clearTimeout(window._tt);window._tt=setTimeout(()=>t.style.display='none',2400);}
+function warn(msg){document.getElementById('daily-warn-msg').textContent=msg;const w=document.getElementById('daily-warn');w.style.display='flex';if(cfg.notif&&Notification.permission==='granted')new Notification('CK Trading',{body:msg});clearTimeout(window._wt);window._wt=setTimeout(()=>w.style.display='none',10000);}
+function openLb(imgs,idx){lbImgs=imgs;lbIdx=idx;document.getElementById('lb-img').src=imgs[idx];document.getElementById('lb-counter').textContent=`${idx+1}/${imgs.length}`;document.getElementById('lb-nav').style.display=imgs.length>1?'flex':'none';document.getElementById('lightbox').classList.add('open');}
+function lbPrev(){lbIdx=(lbIdx-1+lbImgs.length)%lbImgs.length;document.getElementById('lb-img').src=lbImgs[lbIdx];document.getElementById('lb-counter').textContent=`${lbIdx+1}/${lbImgs.length}`;}
+function lbNext(){lbIdx=(lbIdx+1)%lbImgs.length;document.getElementById('lb-img').src=lbImgs[lbIdx];document.getElementById('lb-counter').textContent=`${lbIdx+1}/${lbImgs.length}`;}
+function closeLb(){document.getElementById('lightbox').classList.remove('open');lbImgs=[];}
+function lbBgClick(e){if(e.target===document.getElementById('lightbox'))closeLb();}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeLb();return;}
+  if(!document.getElementById('page-detail').classList.contains('active'))return;
+  if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;
+  if(e.key==='w'||e.key==='W')quickLog(1);
+  else if(e.key==='b'||e.key==='B')quickLog(2);
+  else if(e.key==='l'||e.key==='L')quickLog(0);
+  else if(e.key==='ArrowLeft')lbPrev();
+  else if(e.key==='ArrowRight')lbNext();
+});
 
-function getNowLocal() {
-    const now = new Date();
-    const pad = n => String(n).padStart(2, '0');
-    return `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+// ==================== THEME / VIEW ====================
+function toggleTheme(){const h=document.documentElement;h.setAttribute('data-theme',h.getAttribute('data-theme')==='dark'?'light':'dark');rebuildAllCharts();}
+function toggleView(){
+  const m=document.body.classList.toggle('mobile-view');
+  document.getElementById('vticon').innerHTML=m?'<span class="text-xl">📱</span><span class="text-[10px] font-bold mt-0.5">手機版</span>':'<span class="text-xl">💻</span><span class="text-[10px] font-bold mt-0.5">電腦版</span>';
+  rebuildAllCharts();
+}
+function rebuildAllCharts(){
+  if(wsId){
+    renderChart();
+    if(document.getElementById('tab-analytics').classList.contains('active'))renderAnalytics();
+    if(document.getElementById('tab-simulator').classList.contains('active')){loadRealStats();runSim();}
+  }
 }
 
-function showToast(msg, type = 'success') {
-    const toast = document.getElementById('toast');
-    const msgEl = document.getElementById('toast-msg');
-    msgEl.className = `alert alert-${type} shadow-lg text-sm font-bold`;
-    msgEl.textContent = msg;
-    toast.style.display = 'block';
-    clearTimeout(window._toastTimer);
-    window._toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 2000);
+// ==================== NAV ====================
+function showPage(id){
+  document.querySelectorAll('.page-content').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='page-home')renderHome();
+  if(id==='page-pf')renderPF();
+  if(id==='page-signal')renderSG();
+}
+function goHome(){wsId=null;document.getElementById('breadcrumb').classList.add('hidden');showPage('page-home');}
+function switchTab(name){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('tab-active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.querySelector(`[data-tab="${name}"]`).classList.add('tab-active');
+  if(name==='calendar')renderCalendar();
+  if(name==='analytics')renderAnalytics();
+  if(name==='journal')renderJournal();
+  if(name==='simulator'){loadRealStats();} // auto-populate
 }
 
-// ==================== NAVIGATION ====================
-function showPage(id) {
-    document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    if (id === 'page-home') renderHome();
-    if (id === 'page-propfirm') renderPF();
+// ==================== SETTINGS ====================
+function openSettings(){
+  document.getElementById('notif-btn').textContent=Notification.permission==='granted'?'✅ 通知已啟用':'啟用瀏覽器通知權限';
+  document.getElementById('modal-settings').showModal();
 }
-
-function goToHome() {
-    currentWorkspaceId = null;
-    document.getElementById('breadcrumb').classList.add('hidden');
-    showPage('page-home');
-}
-
-function toggleTheme() {
-    const html = document.documentElement;
-    html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-    if (chart) updateDetail();
-}
-
-function toggleDeviceView() {
-    const isMobile = document.body.classList.toggle('mobile-view');
-    const target = document.getElementById('toggle-icon');
-    target.innerHTML = isMobile
-        ? `<div class="flex flex-col items-center leading-none" style="color:#00d7ff"><span class="text-xl">📱</span><span class="text-[10px] font-bold mt-1">手機版</span></div>`
-        : `<div class="flex flex-col items-center leading-none" style="color:#00d7ff"><span class="text-xl">💻</span><span class="text-[10px] font-bold mt-1">電腦版</span></div>`;
-    if (chart) updateDetail();
-}
+function saveSettings(){saveCfg();toast('✅ 設定已儲存');document.getElementById('modal-settings').close();}
+async function reqNotif(){const r=await Notification.requestPermission();document.getElementById('notif-btn').textContent=r==='granted'?'✅ 通知已啟用':'❌ 使用者拒絕通知';cfg.notif=(r==='granted');saveCfg();}
 
 // ==================== IMPORT / EXPORT ====================
-function handleImport(event) {
-    const file = event.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-        try {
-            const imported = JSON.parse(e.target.result);
-            if (imported.workspaces && imported.pfAccounts) {
-                if (confirm('匯入將覆蓋現有資料，確定繼續？')) { db = imported; save(); window.location.reload(); }
-            } else { alert('格式不正確。'); }
-        } catch { alert('讀取失敗，請確認是正確的備份檔案。'); }
-    };
-    reader.readAsText(file);
+function handleImport(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const imp=JSON.parse(ev.target.result);
+      if(imp.workspaces&&imp.pfAccounts){if(confirm('匯入將覆蓋現有資料，確定？')){db=imp;if(!db.signalGroups)db.signalGroups=[];save();window.location.reload();}}
+      else alert('格式不正確');
+    }catch{alert('讀取失敗');}
+  };
+  r.readAsText(f);e.target.value='';
+}
+function exportJSON(){const a=document.createElement('a');a.href='data:text/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(db));a.download=`CK_Backup_${today()}.json`;a.click();}
+function exportCSV(monthOnly){
+  const ws=db.workspaces.find(w=>w.id===wsId);if(!ws)return;
+  let trades=[...ws.trades];
+  if(monthOnly){const m=document.getElementById('filter-month').value;if(m!=='all')trades=trades.filter(t=>t.date&&t.date.startsWith(m));}
+  const h=['#','DateTime','Result','Emotion','Violation','RR','PnL($)','Balance($)','Rules','Tags','Notes'];
+  let bal=ws.initialCapital;
+  const rows=trades.map((t,i)=>{bal+=t.pnl;return[i+1,t.date,t.result===1?'WIN':t.result===2?'BE':'LOSS',t.emotion||'normal',t.isViol?'YES':'NO',t.rr,t.pnl,bal.toFixed(2),(t.rules||[]).join('|'),(t.tags||[]).join('|'),(t.note||'').replace(/"/g,"'")];});
+  const csv=[h,...rows].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download=`${ws.name}_${today()}.csv`;a.click();
 }
 
-function exportDataJSON() {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
-    const dl = document.createElement('a');
-    dl.setAttribute("href", dataStr);
-    dl.setAttribute("download", `CK_Backup_${new Date().toISOString().slice(0,10)}.json`);
-    dl.click();
+// ==================== STRATEGY CRUD ====================
+function openAddWS(){tempRules=[];['ns-name','ns-rule'].forEach(id=>document.getElementById(id).value='');document.getElementById('ns-rule-list').innerHTML='';document.getElementById('modal-add-ws').showModal();}
+function addRule(){const inp=document.getElementById('ns-rule'),r=inp.value.trim();if(r&&!tempRules.includes(r)){tempRules.push(r);renderTempRules();inp.value='';inp.focus();}}
+function removeRule(i){tempRules.splice(i,1);renderTempRules();}
+function renderTempRules(){document.getElementById('ns-rule-list').innerHTML=tempRules.map((r,i)=>`<div class="badge badge-primary gap-1 p-2 text-xs font-bold cursor-pointer" onclick="removeRule(${i})">✕ ${r}</div>`).join('');}
+function createWS(){
+  const name=document.getElementById('ns-name').value.trim();if(!name){alert('請輸入策略名稱');return;}
+  db.workspaces.push({id:Date.now(),name,initialCapital:parseFloat(document.getElementById('ns-cap').value)||10000,defaultRR:parseFloat(document.getElementById('ns-rr').value)||2.0,riskPerTrade:parseFloat(document.getElementById('ns-risk').value)||100,dailyLossLimit:parseFloat(document.getElementById('ns-dlimit').value)||300,maxTradesPerDay:parseInt(document.getElementById('ns-maxt').value)||5,consecLossAlert:parseInt(document.getElementById('ns-consec').value)||3,monthlyTarget:parseFloat(document.getElementById('ns-target').value)||1000,checklist:[...tempRules],trades:[],journal:[]});
+  save();renderHome();document.getElementById('modal-add-ws').close();toast('✅ 策略已建立');
 }
-
-function exportStrategyCSV(currentMonthOnly) {
-    const ws = db.workspaces.find(w => w.id === currentWorkspaceId);
-    if (!ws) return;
-    let trades = [...ws.trades];
-    if (currentMonthOnly) {
-        const selectedMonth = document.getElementById('filter-month').value;
-        if (selectedMonth !== 'all') {
-            trades = trades.filter(t => t.date.startsWith(selectedMonth));
-        }
-    }
-    const headers = ['#', 'DateTime', 'Result', 'RR', 'PnL($)', 'Balance($)', 'Rules', 'Notes'];
-    let bal = ws.initialCapital;
-    const rows = trades.map((t, i) => {
-        bal += t.pnl;
-        const resultLabel = t.result === 1 ? 'WIN' : t.result === 2 ? 'BE' : 'LOSS';
-        return [i+1, t.date, resultLabel, t.rr, t.pnl, bal.toFixed(2), (t.rules||[]).join(' | '), (t.note||'').replace(/"/g,"'")];
-    });
-    const csvContent = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
-    const dl = document.createElement('a');
-    dl.setAttribute("href", "data:text/csv;charset=utf-8,\uFEFF" + encodeURIComponent(csvContent));
-    dl.setAttribute("download", `${ws.name}_${currentMonthOnly ? 'month' : 'all'}_${new Date().toISOString().slice(0,10)}.csv`);
-    dl.click();
-}
-
-// ==================== STRATEGY ====================
-function openAddStrategyModal() {
-    tempChecklist = [];
-    document.getElementById('ns-rule-list').innerHTML = '';
-    document.getElementById('ns-rule-input').value = '';
-    document.getElementById('ns-name').value = '';
-    document.getElementById('modal-add-strategy').showModal();
-}
-
-function addRuleToList() {
-    const input = document.getElementById('ns-rule-input');
-    const rule = input.value.trim();
-    if (rule && !tempChecklist.includes(rule)) {
-        tempChecklist.push(rule);
-        renderTempRules();
-        input.value = '';
-        input.focus();
-    }
-}
-
-function removeTempRule(index) {
-    tempChecklist.splice(index, 1);
-    renderTempRules();
-}
-
-function renderTempRules() {
-    document.getElementById('ns-rule-list').innerHTML = tempChecklist.map((r, i) => `
-        <div class="badge badge-primary gap-2 p-3 font-bold">
-            <svg onclick="removeTempRule(${i})" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                class="inline-block w-4 h-4 stroke-current cursor-pointer">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-            ${r}
-        </div>`).join('');
-}
-
-function createStrategy() {
-    const name = document.getElementById('ns-name').value.trim();
-    if (!name) { alert('請輸入策略名稱'); return; }
-    const ws = {
-        id: Date.now(),
-        name,
-        initialCapital: parseFloat(document.getElementById('ns-cap').value) || 10000,
-        defaultRR: parseFloat(document.getElementById('ns-rr').value) || 2.0,
-        riskPerTrade: parseFloat(document.getElementById('ns-risk').value) || 100,
-        checklist: [...tempChecklist],
-        trades: []
-    };
-    db.workspaces.push(ws);
-    save(); renderHome();
-    document.getElementById('modal-add-strategy').close();
-    showToast('✅ 策略已建立');
-}
-
-function deleteWorkspace(id) {
-    if (confirm('確定永久刪除此策略？')) {
-        db.workspaces = db.workspaces.filter(ws => ws.id !== id);
-        save(); renderHome();
-    }
-}
-
-// ==================== HOME RENDER ====================
-function renderHome() {
-    const list = document.getElementById('strategy-list');
-    if (!db.workspaces.length) {
-        list.innerHTML = `<div class="col-span-3 text-center opacity-40 py-20">
-            <div class="text-5xl mb-4">📊</div>
-            <p class="font-bold">尚無策略，點擊右上方按鈕建立第一個系統</p>
-        </div>`;
-        return;
-    }
-    list.innerHTML = db.workspaces.map(ws => {
-        const trades = ws.trades;
-        const pnl = trades.reduce((s, t) => s + t.pnl, 0);
-        const wins = trades.filter(t => t.result === 1).length;
-        const winRate = trades.length ? ((wins / trades.length) * 100).toFixed(0) : 0;
-        const winTrades = trades.filter(t => t.result === 1);
-        const avgRR = wins ? (winTrades.reduce((s, t) => s + t.rr, 0) / winTrades.length).toFixed(1) : '0.0';
-        const balance = ws.initialCapital + pnl;
-        return `
-        <div class="card bg-base-100 shadow-xl border border-base-content/5 relative group cursor-pointer hover:border-primary/30 transition-all" onclick="enterWorkspace(${ws.id})">
-            <button onclick="event.stopPropagation(); deleteWorkspace(${ws.id})" class="absolute top-2 right-2 btn btn-circle btn-xs btn-ghost text-error opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
-            <div class="card-body p-6">
-                <h2 class="card-title text-primary font-black italic">${ws.name}</h2>
-                <div class="grid grid-cols-2 gap-2 mt-2 text-[10px] uppercase font-bold opacity-60">
-                    <div>Win Rate: <span class="text-primary opacity-100">${winRate}%</span></div>
-                    <div>Avg RR: <span class="text-accent opacity-100">${avgRR}</span></div>
-                    <div>Samples: <span class="opacity-100">${trades.length}</span></div>
-                    <div>Risk/Trade: <span class="text-warning opacity-100">$${ws.riskPerTrade||100}</span></div>
-                </div>
-                <div class="flex justify-between items-center mt-4 border-t border-base-content/10 pt-3">
-                    <span class="text-xs font-bold opacity-60">Balance: $${balance.toFixed(0)}</span>
-                    <span class="${pnl >= 0 ? 'text-success' : 'text-error'} font-black text-xl">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(0)}</span>
-                </div>
-            </div>
-        </div>`;
-    }).join('');
-}
-
-// ==================== WORKSPACE ENTRY ====================
-function enterWorkspace(id) {
-    currentWorkspaceId = id;
-    const ws = db.workspaces.find(w => w.id === id);
-    document.getElementById('current-nav-name').innerText = ws.name;
-    document.getElementById('breadcrumb').classList.remove('hidden');
-    document.getElementById('q-rr').value = ws.defaultRR;
-    document.getElementById('q-date').value = getNowLocal();
-    document.getElementById('q-amt').value = '';
-    document.getElementById('q-note').value = '';
-    clearPendingImage({ stopPropagation: () => {} });
-
-    // Render checklist
-    document.getElementById('checklist-items-container').innerHTML =
-        ws.checklist.length
-            ? ws.checklist.map(item => `
-                <label class="flex items-center gap-3 cursor-pointer hover:bg-base-100/30 p-1 rounded">
-                    <input type="checkbox" class="checkbox checkbox-success checkbox-sm rule-check" data-rule="${item}">
-                    <span class="text-[11px]">${item}</span>
-                </label>`).join('')
-            : '<p class="opacity-40 italic text-[10px]">無檢核項（建立策略時可新增）</p>';
-
-    // Populate month filter
-    populateMonthFilter(ws.trades);
-
-    showPage('page-detail');
-    updateDetail();
-}
-
-function populateMonthFilter(trades) {
-    const months = [...new Set(trades.map(t => t.date ? t.date.slice(0, 7) : '').filter(Boolean))].sort().reverse();
-    const select = document.getElementById('filter-month');
-    const current = select.value;
-    select.innerHTML = '<option value="all">所有月份數據</option>' +
-        months.map(m => `<option value="${m}" ${m === current ? 'selected' : ''}>${m}</option>`).join('');
-}
+function delWS(id){if(confirm('確定永久刪除此策略？')){db.workspaces=db.workspaces.filter(w=>w.id!==id);save();renderHome();}}
 
 // ==================== STATS ====================
-function calcStats(trades, initialCapital) {
-    if (!trades.length) return { winRate: 0, avgRR: 0, ev: 0, mdd: 0, roi: 0, totalPnl: 0, balance: initialCapital };
+function calcStats(trades,cap){
+  const wins=trades.filter(t=>t.result===1),losses=trades.filter(t=>t.result===0),n=trades.length;
+  if(!n)return{winRate:0,avgRR:0,ev:0,mdd:0,roi:0,pf:0,kelly:0,maxConsec:0,balance:cap,totalPnl:0,violations:0,avgWin:0,avgLoss:0};
+  const wr=wins.length/n;
+  const avgWin=wins.length?wins.reduce((s,t)=>s+t.pnl,0)/wins.length:0;
+  const avgLoss=losses.length?Math.abs(losses.reduce((s,t)=>s+t.pnl,0)/losses.length):0;
+  const avgRR=wins.length?wins.reduce((s,t)=>s+(t.rr||0),0)/wins.length:0;
+  const ev=(wr*avgWin)-((1-wr)*avgLoss);
+  let peak=cap,bal=cap,mdd=0;
+  trades.forEach(t=>{bal+=t.pnl;if(bal>peak)peak=bal;const dd=peak>0?(peak-bal)/peak*100:0;if(dd>mdd)mdd=dd;});
+  const tw=wins.reduce((s,t)=>s+t.pnl,0),tl=Math.abs(losses.reduce((s,t)=>s+t.pnl,0));
+  const pf=tl>0?tw/tl:(tw>0?99:1);
+  const kelly=wr>0&&avgRR>0?Math.max(0,(wr-(1-wr)/avgRR)*100):0;
+  let maxC=0,cur=0;
+  trades.forEach(t=>{if(t.result===0){cur++;maxC=Math.max(maxC,cur);}else cur=0;});
+  const totalPnl=trades.reduce((s,t)=>s+t.pnl,0);
+  return{winRate:wr*100,avgRR,ev,mdd,roi:cap?(totalPnl/cap)*100:0,pf,kelly,maxConsec:maxC,balance:cap+totalPnl,totalPnl,violations:trades.filter(t=>t.isViol).length,avgWin,avgLoss};
+}
+function healthScore(s,n){
+  if(n<10)return'—';let sc=0;
+  if(s.winRate>=55)sc+=2;else if(s.winRate>=45)sc+=1;
+  if(s.ev>0)sc+=2;else if(s.ev>-30)sc+=1;
+  if(s.mdd<=8)sc+=2;else if(s.mdd<=15)sc+=1;
+  if(s.pf>=1.5)sc+=2;else if(s.pf>=1)sc+=1;
+  if(s.roi>10)sc+=2;else if(s.roi>0)sc+=1;
+  return sc>=9?'A':sc>=7?'B':sc>=5?'C':sc>=3?'D':'F';
+}
 
-    const wins = trades.filter(t => t.result === 1);
-    const losses = trades.filter(t => t.result === 0);
-    const total = trades.length;
+// ==================== HOME ====================
+function renderHome(){
+  const el=document.getElementById('ws-list');
+  if(!db.workspaces.length){el.innerHTML='<div class="col-span-3 text-center opacity-30 py-20 text-xs"><div class="text-5xl mb-3">📊</div><p class="font-bold">尚無策略，點擊按鈕建立</p></div>';return;}
+  el.innerHTML=db.workspaces.map(ws=>{
+    const s=calcStats(ws.trades,ws.initialCapital),sc=healthScore(s,ws.trades.length);
+    return `<div class="card bg-base-100 shadow-xl border border-base-content/5 relative group cursor-pointer hover:border-primary/30 transition-all" onclick="enterWS(${ws.id})">
+      <button onclick="event.stopPropagation();delWS(${ws.id})" class="absolute top-2 right-2 btn btn-circle btn-xs btn-ghost text-error opacity-0 group-hover:opacity-100">✕</button>
+      <div class="card-body p-4">
+        <h2 class="card-title text-primary font-black italic text-sm truncate">${ws.name}</h2>
+        <div class="grid grid-cols-2 gap-1 text-[8px] font-bold opacity-50 mt-1">
+          <div>Win Rate: <span class="text-primary opacity-100">${s.winRate.toFixed(0)}%</span></div>
+          <div>Avg RR: <span class="text-accent opacity-100">${s.avgRR.toFixed(1)}</span></div>
+          <div>PF: <span class="text-secondary opacity-100">${s.pf>=99?'∞':s.pf.toFixed(1)}</span></div>
+          <div>Score: <span class="score-${sc} opacity-100">${sc}</span></div>
+        </div>
+        <div class="flex justify-between items-center mt-2 border-t border-base-content/10 pt-2">
+          <span class="text-[9px] font-bold opacity-40">$${s.balance.toFixed(0)}</span>
+          <span class="${s.totalPnl>=0?'text-success':'text-error'} font-black text-lg">${s.totalPnl>=0?'+':''}$${s.totalPnl.toFixed(0)}</span>
+        </div>
+      </div></div>`;
+  }).join('');
+}
 
-    const winRate = wins.length / total;
-    const lossRate = losses.length / total;
-
-    const avgRR = wins.length ? wins.reduce((s, t) => s + (t.rr || 0), 0) / wins.length : 0;
-    const avgWin = wins.length ? wins.reduce((s, t) => s + t.pnl, 0) / wins.length : 0;
-    const avgLoss = losses.length ? Math.abs(losses.reduce((s, t) => s + t.pnl, 0) / losses.length) : 0;
-    const ev = (winRate * avgWin) - (lossRate * avgLoss);
-
-    // MDD
-    let peak = initialCapital, bal = initialCapital, maxDD = 0;
-    trades.forEach(t => {
-        bal += t.pnl;
-        if (bal > peak) peak = bal;
-        const dd = peak > 0 ? ((peak - bal) / peak) * 100 : 0;
-        if (dd > maxDD) maxDD = dd;
-    });
-
-    const totalPnl = trades.reduce((s, t) => s + t.pnl, 0);
-    const roi = initialCapital ? (totalPnl / initialCapital) * 100 : 0;
-
-    return { winRate: winRate * 100, avgRR, ev, mdd: maxDD, roi, totalPnl, balance: initialCapital + totalPnl };
+// ==================== ENTER WORKSPACE ====================
+function enterWS(id){
+  wsId=id;const ws=db.workspaces.find(w=>w.id===id);
+  document.getElementById('cur-nav').innerText=ws.name;
+  document.getElementById('breadcrumb').classList.remove('hidden');
+  document.getElementById('q-rr').value=ws.defaultRR;
+  document.getElementById('q-date').value=nowDT();
+  ['q-amt','q-note','q-tags'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('q-emo').value='normal';
+  document.getElementById('q-viol').checked=false;
+  pendingImgs=[];
+  document.getElementById('pending-imgs').innerHTML='';
+  document.getElementById('img-zone').className='img-zone';
+  document.getElementById('ck-items').innerHTML=ws.checklist.length
+    ?ws.checklist.map(r=>`<label class="flex items-center gap-2 cursor-pointer hover:bg-base-100/20 px-1 py-0.5 rounded"><input type="checkbox" class="checkbox checkbox-success checkbox-xs rule-check" data-rule="${r}"><span class="text-[9px]">${r}</span></label>`).join('')
+    :'<p class="text-[8px] opacity-30 italic">無檢核項</p>';
+  const now=new Date();calY=now.getFullYear();calM=now.getMonth();
+  document.getElementById('j-date').value=today();
+  populateMonths(ws.trades);
+  showPage('page-detail');
+  switchTab('dashboard');
+  updateDetail();
+}
+function populateMonths(trades){
+  const months=[...new Set(trades.map(t=>t.date?t.date.slice(0,7):'').filter(Boolean))].sort().reverse();
+  const sel=document.getElementById('filter-month'),cur=sel.value;
+  sel.innerHTML='<option value="all">所有月份</option>'+months.map(m=>`<option value="${m}"${m===cur?' selected':''}>${m}</option>`).join('');
 }
 
 // ==================== UPDATE DETAIL ====================
-function updateDetail() {
-    const ws = db.workspaces.find(w => w.id === currentWorkspaceId);
-    if (!ws) return;
-
-    const selectedMonth = document.getElementById('filter-month').value;
-    let trades = ws.trades;
-    if (selectedMonth !== 'all') {
-        trades = trades.filter(t => t.date && t.date.startsWith(selectedMonth));
-    }
-
-    populateMonthFilter(ws.trades);
-
-    const stats = calcStats(trades, ws.initialCapital);
-
-    document.getElementById('d-balance').innerText = `$${stats.balance.toFixed(0)}`;
-    document.getElementById('d-count').innerText = trades.length;
-    document.getElementById('d-winrate').innerText = `${stats.winRate.toFixed(1)}%`;
-    document.getElementById('d-avgrr').innerText = stats.avgRR.toFixed(2);
-    document.getElementById('d-ev').innerText = `$${stats.ev.toFixed(0)}`;
-    document.getElementById('d-mdd').innerText = `${stats.mdd.toFixed(1)}%`;
-
-    const roiEl = document.getElementById('d-roi');
-    roiEl.innerText = `${stats.roi.toFixed(1)}%`;
-    roiEl.className = `stat-value text-lg md:text-xl font-mono ${stats.roi >= 0 ? 'text-success' : 'text-error'}`;
-
-    renderTable(trades, ws.initialCapital);
-    renderChart(trades, ws.initialCapital);
+function updateDetail(){
+  const ws=db.workspaces.find(w=>w.id===wsId);if(!ws)return;
+  const sel=document.getElementById('filter-month').value;
+  let trades=ws.trades;
+  if(sel!=='all')trades=trades.filter(t=>t.date&&t.date.startsWith(sel));
+  populateMonths(ws.trades);
+  const s=calcStats(trades,ws.initialCapital),sc=healthScore(s,trades.length);
+  document.getElementById('d-balance').innerText=`$${s.balance.toFixed(0)}`;
+  document.getElementById('d-winrate').innerText=`${s.winRate.toFixed(1)}%`;
+  document.getElementById('d-avgrr').innerText=s.avgRR.toFixed(2);
+  document.getElementById('d-ev').innerText=`$${s.ev.toFixed(0)}`;
+  document.getElementById('d-mdd').innerText=`${s.mdd.toFixed(1)}%`;
+  const roi=document.getElementById('d-roi');roi.innerText=`${s.roi.toFixed(1)}%`;roi.className=`stat-value text-sm md:text-base font-mono ${s.roi>=0?'text-success':'text-error'}`;
+  document.getElementById('d-pf').innerText=s.pf>=99?'∞':s.pf.toFixed(2);
+  document.getElementById('d-kelly').innerText=`${s.kelly.toFixed(1)}%`;
+  document.getElementById('d-consec').innerText=`${s.maxConsec} 筆`;
+  document.getElementById('d-count').innerText=trades.length;
+  document.getElementById('d-viol').innerText=`${s.violations} 筆`;
+  const scoreEl=document.getElementById('d-score');scoreEl.innerText=sc;scoreEl.className=`text-xl font-black font-mono score-${sc}`;
+  const thisM=today().slice(0,7);
+  const mPnl=ws.trades.filter(t=>t.date&&t.date.startsWith(thisM)).reduce((s,t)=>s+t.pnl,0);
+  if(ws.monthlyTarget){
+    const pct=Math.min(100,Math.max(0,(mPnl/ws.monthlyTarget)*100));
+    document.getElementById('mt-bar').classList.remove('hidden');
+    document.getElementById('mt-label').innerText=`$${mPnl.toFixed(0)} / $${ws.monthlyTarget} (${pct.toFixed(0)}%)`;
+    document.getElementById('mt-prog').value=pct;
+    document.getElementById('mt-prog').className=`progress w-full h-2 ${pct>=100?'progress-success':pct>=50?'progress-warning':'progress-error'}`;
+  }
+  checkDailyStatus(ws);
+  renderTable(trades,ws.initialCapital);
+  renderChart(trades,ws.initialCapital);
+}
+function checkDailyStatus(ws){
+  const td=today();
+  const todayTrades=ws.trades.filter(t=>t.date&&t.date.startsWith(td));
+  const todayPnl=todayTrades.reduce((s,t)=>s+t.pnl,0);
+  const msg=[];
+  if(ws.dailyLossLimit&&todayPnl<=-ws.dailyLossLimit){warn(`🚨 已達每日虧損上限 $${ws.dailyLossLimit}！建議停止交易`);msg.push(`每日虧損上限已觸發：$${todayPnl.toFixed(0)}`);}
+  if(ws.maxTradesPerDay&&todayTrades.length>=ws.maxTradesPerDay)msg.push(`今日已完成 ${todayTrades.length} 筆（上限 ${ws.maxTradesPerDay} 筆）`);
+  let cur=0;[...ws.trades].reverse().every(t=>{if(t.result===0){cur++;return true;}return false;});
+  if(ws.consecLossAlert&&cur>=ws.consecLossAlert)warn(`⚠️ 連續虧損 ${cur} 筆，請冷靜評估後再進場`);
+  const ds=document.getElementById('daily-status');
+  if(msg.length){ds.classList.remove('hidden');ds.className=`rounded-box p-2 border border-error text-xs font-bold text-error bg-error/10`;ds.innerHTML=`⚠️ 風險提示：${msg.join(' ｜ ')} ｜ 今日 ${todayTrades.length} 筆，PnL: $${todayPnl.toFixed(0)}`;}
+  else if(todayTrades.length>0){ds.classList.remove('hidden');ds.className=`rounded-box p-2 border border-base-content/10 text-xs font-bold opacity-60`;ds.innerText=`今日已交易 ${todayTrades.length} 筆，PnL: ${todayPnl>=0?'+':''}$${todayPnl.toFixed(0)}`;}
+  else ds.classList.add('hidden');
 }
 
 // ==================== TABLE ====================
-async function renderTable(trades, startCap) {
-    const tbody = document.getElementById('detail-table-body');
-    // Build rows first (reversed)
-    const reversed = [...trades].reverse();
-    let runningBal = startCap;
-    // Calculate balances in forward order
-    const balMap = {};
-    let bal = startCap;
-    trades.forEach(t => { bal += t.pnl; balMap[t.id] = bal; });
-
-    const rows = reversed.map((t, i) => {
-        const resultClass = t.result === 1 ? 'text-success' : t.result === 2 ? 'text-warning' : 'text-error';
-        const resultLabel = t.result === 1 ? '✅ WIN' : t.result === 2 ? '⚡ BE' : '❌ LOSS';
-        const rulesHtml = (t.rules && t.rules.length)
-            ? t.rules.map(r => `<span class="badge badge-outline badge-xs">${r}</span>`).join(' ')
-            : '<span class="opacity-30">—</span>';
-        const imgCell = t.hasImage
-            ? `<td><img class="thumb-img" data-trade-id="${t.id}" src="" onclick="viewTradeImage(${t.id})" title="點擊放大"></td>`
-            : '<td class="opacity-20">—</td>';
-
-        return `<tr>
-            <td class="opacity-50">${trades.length - i}</td>
-            <td class="text-[10px]">${(t.date||'').replace('T',' ')}</td>
-            <td class="font-black ${resultClass}">${resultLabel}</td>
-            <td>${t.rr}</td>
-            <td class="${t.pnl >= 0 ? 'text-success' : 'text-error'} font-bold">${t.pnl >= 0 ? '+' : ''}$${t.pnl}</td>
-            <td>$${(balMap[t.id]||0).toFixed(0)}</td>
-            <td class="max-w-[160px]"><div class="flex flex-wrap gap-1">${rulesHtml}</div></td>
-            <td class="max-w-[120px] text-[10px] opacity-70">${t.note||''}</td>
-            ${imgCell}
-            <td><button onclick="deleteTrade(${t.id})" class="btn btn-ghost btn-xs text-error opacity-50 hover:opacity-100">✕</button></td>
-        </tr>`;
-    });
-
-    tbody.innerHTML = rows.join('');
-
-    // Load thumbnail images asynchronously
-    const thumbs = tbody.querySelectorAll('.thumb-img[data-trade-id]');
-    for (const thumb of thumbs) {
-        const tid = parseInt(thumb.getAttribute('data-trade-id'));
-        const dataUrl = await getImage(tid);
-        if (dataUrl) thumb.src = dataUrl;
-    }
+async function renderTable(trades,startCap){
+  const tbody=document.getElementById('trade-tbody');
+  const balMap={};let bal=startCap;
+  trades.forEach(t=>{bal+=t.pnl;balMap[t.id]=bal;});
+  const emoMap={normal:'😐',confident:'😎',impulsive:'😤',hesitant:'😰',fearful:'😨'};
+  const rows=[...trades].reverse().map((t,i)=>{
+    const rc=t.result===1?'text-success':t.result===2?'text-warning':'text-error';
+    const rl=t.result===1?'✅WIN':t.result===2?'⚡BE':'❌LOSS';
+    const rules=(t.rules||[]).map(r=>`<span class="badge badge-outline badge-xs text-[7px]">${r}</span>`).join('');
+    const tags=(t.tags||[]).map(x=>`<span class="badge badge-ghost badge-xs text-[7px]">${x}</span>`).join('');
+    const imgBtn=t.imgCount?`<button class="btn btn-ghost btn-xs" onclick="loadAndShowImgs(${t.id},${t.imgCount})">📷${t.imgCount}</button>`:'—';
+    const violBadge=t.isViol?'<span class="badge badge-error badge-xs ml-1">違規</span>':'';
+    return `<tr class="${t.isViol?'bg-error/5':''}">
+      <td class="opacity-40">${trades.length-i}</td>
+      <td class="text-[9px]">${(t.date||'').replace('T',' ')}</td>
+      <td class="font-black ${rc}">${rl}${violBadge}</td>
+      <td>${emoMap[t.emotion||'normal']||'😐'}</td>
+      <td>${t.rr}</td>
+      <td class="${t.pnl>=0?'text-success':'text-error'} font-bold">${t.pnl>=0?'+':''}$${t.pnl}</td>
+      <td>$${(balMap[t.id]||0).toFixed(0)}</td>
+      <td><div class="flex flex-wrap gap-0.5">${rules}</div></td>
+      <td><div class="flex flex-wrap gap-0.5">${tags}</div></td>
+      <td class="max-w-[80px] truncate opacity-60">${t.note||''}</td>
+      <td>${imgBtn}</td>
+      <td><button onclick="delTrade(${t.id})" class="btn btn-ghost btn-xs text-error opacity-40 hover:opacity-100">✕</button></td>
+    </tr>`;
+  });
+  tbody.innerHTML=rows.join('');
 }
-
-async function viewTradeImage(tradeId) {
-    const dataUrl = await getImage(tradeId);
-    if (dataUrl) openLightbox(dataUrl);
-}
+async function loadAndShowImgs(tradeId,count){const imgs=[];for(let i=0;i<count;i++){const url=await getImg(`${tradeId}_${i}`);if(url)imgs.push(url);}if(imgs.length)openLb(imgs,0);}
 
 // ==================== CHART ====================
-function renderChart(trades, startCap) {
-    const ctx = document.getElementById('detailChart').getContext('2d');
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const tickColor = isDark ? '#94a3b8' : '#475569';
-    const gridColor = isDark ? 'rgba(148,163,184,0.1)' : 'rgba(71,85,105,0.1)';
-
-    let bal = startCap;
-    const dataPts = [startCap];
-    trades.forEach(t => { bal += t.pnl; dataPts.push(parseFloat(bal.toFixed(2))); });
-
-    const labels = dataPts.map((_, i) => i === 0 ? 'Start' : `#${i}`);
-
-    if (chart) chart.destroy();
-    chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [{
-                label: 'Balance',
-                data: dataPts,
-                borderColor: '#00d7ff',
-                backgroundColor: 'rgba(0,215,255,0.06)',
-                fill: true,
-                tension: 0.3,
-                pointRadius: dataPts.length > 50 ? 0 : 3,
-                pointHoverRadius: 5,
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { intersect: false, mode: 'index' },
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { ticks: { color: tickColor, callback: v => `$${v}` }, grid: { color: gridColor } },
-                x: { ticks: { color: tickColor, maxTicksLimit: 10 }, grid: { color: gridColor } }
-            }
-        }
-    });
+function renderChart(trades,startCap){
+  if(!trades){const r=getFilteredTrades();trades=r.trades;startCap=r.startCap;}
+  const ctx=document.getElementById('equity-chart').getContext('2d');
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  const tc=dark?'#94a3b8':'#475569',gc=dark?'rgba(148,163,184,.08)':'rgba(71,85,105,.08)';
+  let bal=startCap;const pts=[startCap];
+  trades.forEach(t=>{bal+=t.pnl;pts.push(parseFloat(bal.toFixed(2)));});
+  if(equityChart)equityChart.destroy();
+  equityChart=new Chart(ctx,{type:'line',data:{labels:pts.map((_,i)=>i===0?'Start':`#${i}`),datasets:[{label:'資金曲線',data:pts,borderColor:'#00d7ff',backgroundColor:'rgba(0,215,255,.06)',fill:true,tension:0.3,pointRadius:pts.length>80?0:2,pointHoverRadius:4,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false}},scales:{y:{ticks:{color:tc,callback:v=>`$${v}`},grid:{color:gc}},x:{ticks:{color:tc,maxTicksLimit:10},grid:{color:gc}}}}});
 }
+function getFilteredTrades(){const ws=db.workspaces.find(w=>w.id===wsId);if(!ws)return{trades:[],startCap:10000};const sel=document.getElementById('filter-month').value;let trades=ws.trades;if(sel!=='all')trades=trades.filter(t=>t.date&&t.date.startsWith(sel));return{trades,startCap:ws.initialCapital};}
 
 // ==================== QUICK LOG ====================
-async function quickLog(result) {
-    const ws = db.workspaces.find(w => w.id === currentWorkspaceId);
-    const rr = parseFloat(document.getElementById('q-rr').value) || 0;
-    const manualAmt = document.getElementById('q-amt').value;
-    const rulesMet = Array.from(document.querySelectorAll('.rule-check:checked')).map(cb => cb.getAttribute('data-rule'));
-    const note = document.getElementById('q-note').value.trim();
-    const risk = ws.riskPerTrade || 100;
-
-    let pnl;
-    if (manualAmt !== '') {
-        pnl = parseFloat(manualAmt);
-    } else {
-        pnl = result === 1 ? risk * rr : result === 0 ? -risk : 0;
-    }
-
-    const tradeId = Date.now();
-    const trade = {
-        id: tradeId,
-        date: document.getElementById('q-date').value || getNowLocal(),
-        result, rr, pnl,
-        rules: rulesMet,
-        note,
-        hasImage: !!pendingImage
-    };
-
-    ws.trades.push(trade);
-
-    // Save image if pending
-    if (pendingImage) {
-        await saveImage(tradeId, pendingImage.dataUrl);
-    }
-
-    save();
-
-    // Reset form
-    document.getElementById('q-date').value = getNowLocal();
-    document.getElementById('q-amt').value = '';
-    document.getElementById('q-note').value = '';
-    document.querySelectorAll('.rule-check').forEach(cb => cb.checked = false);
-    clearPendingImage({ stopPropagation: () => {} });
-
-    populateMonthFilter(ws.trades);
-    updateDetail();
-
-    const labels = ['❌ LOSS 已記錄', '⚡ BE 已記錄', '✅ WIN 已記錄'];
-    const types = ['error', 'warning', 'success'];
-    showToast(labels[result], types[result]);
+async function quickLog(result){
+  const ws=db.workspaces.find(w=>w.id===wsId);if(!ws)return;
+  const rr=parseFloat(document.getElementById('q-rr').value)||0;
+  const manualAmt=document.getElementById('q-amt').value;
+  const rules=Array.from(document.querySelectorAll('.rule-check:checked')).map(cb=>cb.getAttribute('data-rule'));
+  const tags=document.getElementById('q-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const risk=ws.riskPerTrade||100;
+  let pnl=manualAmt!==''?parseFloat(manualAmt):(result===1?risk*rr:result===0?-risk:0);
+  const tid=Date.now();
+  ws.trades.push({id:tid,date:document.getElementById('q-date').value||nowDT(),result,rr,pnl,rules,tags,note:document.getElementById('q-note').value.trim(),emotion:document.getElementById('q-emo').value,isViol:document.getElementById('q-viol').checked,imgCount:pendingImgs.length});
+  for(let i=0;i<pendingImgs.length;i++)await putImg(`${tid}_${i}`,pendingImgs[i].dataUrl);
+  save();
+  document.getElementById('q-date').value=nowDT();
+  document.getElementById('q-amt').value='';document.getElementById('q-note').value='';document.getElementById('q-tags').value='';
+  document.getElementById('q-emo').value='normal';document.getElementById('q-viol').checked=false;
+  document.querySelectorAll('.rule-check').forEach(cb=>cb.checked=false);
+  clearPendingImgs();populateMonths(ws.trades);updateDetail();
+  const lbs=['❌ LOSS','⚡ BE','✅ WIN'],tps=['error','warning','success'];
+  toast(`${lbs[result]} 已記錄`,tps[result]);
+}
+function delTrade(tid){
+  if(!confirm('確定刪除此筆交易紀錄？'))return;
+  const ws=db.workspaces.find(w=>w.id===wsId);
+  const t=ws.trades.find(t=>t.id===tid);
+  if(t&&t.imgCount){for(let i=0;i<t.imgCount;i++)delImg(`${tid}_${i}`);}
+  ws.trades=ws.trades.filter(t=>t.id!==tid);
+  save();populateMonths(ws.trades);updateDetail();toast('🗑️ 已刪除','warning');
 }
 
-function deleteTrade(tid) {
-    if (!confirm('確定刪除此筆交易紀錄？')) return;
-    const ws = db.workspaces.find(w => w.id === currentWorkspaceId);
-    const trade = ws.trades.find(t => t.id === tid);
-    if (trade && trade.hasImage) deleteImage(tid);
-    ws.trades = ws.trades.filter(t => t.id !== tid);
-    save();
-    populateMonthFilter(ws.trades);
-    updateDetail();
-    showToast('🗑️ 已刪除');
+// ==================== IMAGE HANDLING ====================
+function setupImgZone(){
+  const zone=document.getElementById('img-zone');
+  zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag-over');});
+  zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over'));
+  zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag-over');Array.from(e.dataTransfer.files).slice(0,3-pendingImgs.length).forEach(f=>{if(f.type.startsWith('image/'))loadImgFile(f);});});
+  document.addEventListener('paste',e=>{if(!document.getElementById('page-detail').classList.contains('active'))return;if(pendingImgs.length>=3)return;Array.from(e.clipboardData.items).forEach(item=>{if(item.type.startsWith('image/')){loadImgFile(item.getAsFile());}});});
 }
+function handleImgFiles(e){Array.from(e.target.files).slice(0,3-pendingImgs.length).forEach(f=>loadImgFile(f));e.target.value='';}
+function loadImgFile(file){if(pendingImgs.length>=3){toast('最多只能附加3張截圖','warning');return;}const r=new FileReader();r.onload=e=>{pendingImgs.push({dataUrl:e.target.result});renderPendingImgs();document.getElementById('img-zone').classList.add('has-img');toast('📸 截圖已加入');};r.readAsDataURL(file);}
+function renderPendingImgs(){const c=document.getElementById('pending-imgs');c.innerHTML=pendingImgs.map((img,i)=>`<div class="relative"><img src="${img.dataUrl}" class="thumb" onclick="openLb(pendingImgs.map(x=>x.dataUrl),${i})"><button onclick="removePending(${i})" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-black leading-none">✕</button></div>`).join('');}
+function removePending(i){pendingImgs.splice(i,1);renderPendingImgs();if(!pendingImgs.length)document.getElementById('img-zone').classList.remove('has-img');}
+function clearPendingImgs(){pendingImgs=[];document.getElementById('pending-imgs').innerHTML='';document.getElementById('img-zone').className='img-zone';}
+
+// ==================== CALENDAR ====================
+function renderCalendar(){
+  const ws=db.workspaces.find(w=>w.id===wsId);if(!ws)return;
+  // Always use ALL trades for calendar (not filtered)
+  const trades=ws.trades;
+  const y=calY,m=calM;
+  document.getElementById('cal-title').innerText=`${y} 年 ${m+1} 月`;
+  const dayMap={};
+  trades.forEach(t=>{if(!t.date)return;const d=t.date.slice(0,10);if(!dayMap[d])dayMap[d]={pnl:0,count:0};dayMap[d].pnl+=t.pnl;dayMap[d].count++;});
+  const firstDay=new Date(y,m,1).getDay(),daysInMonth=new Date(y,m+1,0).getDate();
+  const todayStr=today();let cells='';
+  for(let i=0;i<firstDay;i++)cells+=`<div class="cal-cell empty-cell"></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const info=dayMap[ds];const isT=ds===todayStr;
+    let cls='cal-cell';if(info){cls+=info.pnl>0?' profit':info.pnl<0?' loss':' be';}if(isT)cls+=' today-cell';
+    const pnlStr=info?(info.pnl>=0?`+$${info.pnl.toFixed(0)}`:`-$${Math.abs(info.pnl).toFixed(0)}`):'';
+    const clr=info?(info.pnl>0?'#4ade80':info.pnl<0?'#f87171':'#fbbf24'):'';
+    cells+=`<div class="${cls}" onclick="showCalDetail('${ds}')"><div class="font-bold text-[10px] ${isT?'text-cyan-400':''}">${d}</div>${info?`<div class="text-[8px] font-bold" style="color:${clr}">${pnlStr}</div><div class="text-[7px] opacity-50">${info.count}筆</div>`:''}</div>`;
+  }
+  document.getElementById('cal-grid').innerHTML=cells;
+}
+function calNav(dir){calM+=dir;if(calM>11){calM=0;calY++;}if(calM<0){calM=11;calY--;}renderCalendar();}
+function showCalDetail(ds){
+  const ws=db.workspaces.find(w=>w.id===wsId);if(!ws)return;
+  const trades=ws.trades.filter(t=>t.date&&t.date.startsWith(ds));
+  const detail=document.getElementById('cal-detail');
+  if(!trades.length){detail.classList.add('hidden');return;}
+  detail.classList.remove('hidden');
+  document.getElementById('cal-detail-title').innerText=`${ds} — ${trades.length} 筆交易`;
+  const pnl=trades.reduce((s,t)=>s+t.pnl,0);
+  document.getElementById('cal-detail-body').innerHTML=
+    `<div class="text-xs font-bold mb-2 ${pnl>=0?'text-success':'text-error'}">當日盈虧：${pnl>=0?'+':''}$${pnl.toFixed(0)}</div>`+
+    trades.map(t=>{const rc=t.result===1?'text-success':t.result===2?'text-warning':'text-error';const rl=t.result===1?'WIN':t.result===2?'BE':'LOSS';return `<div class="flex items-center gap-2 bg-base-200 rounded p-1.5 text-[10px]"><span class="${rc} font-black">${rl}</span><span class="opacity-50">${t.date.slice(11,16)}</span><span class="font-bold">${t.pnl>=0?'+':''}$${t.pnl}</span><span class="opacity-40">${t.note||''}</span></div>`;}).join('');
+}
+
+// ==================== ANALYTICS (fixed chart heights) ====================
+function renderAnalytics(){
+  const ws=db.workspaces.find(w=>w.id===wsId);if(!ws)return;
+  const sel=document.getElementById('filter-month').value;
+  let trades=ws.trades;
+  if(sel!=='all')trades=trades.filter(t=>t.date&&t.date.startsWith(sel));
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  const tc=dark?'#94a3b8':'#475569';
+
+  // Session win rate — fixed height via container
+  const sessions={早盤:{min:6,max:12,w:0,l:0},午盤:{min:12,max:18,w:0,l:0},晚盤:{min:18,max:24,w:0,l:0},深夜:{min:0,max:6,w:0,l:0}};
+  trades.forEach(t=>{const h=t.date?parseInt(t.date.slice(11,13))||0:0;for(const[name,s]of Object.entries(sessions)){if(h>=s.min&&h<s.max){if(t.result===1)s.w++;else if(t.result===0)s.l++;}}});
+  buildBarChart('session-chart','session-c',Object.keys(sessions),Object.entries(sessions).map(([,s])=>s.w+s.l>0?(s.w/(s.w+s.l)*100):0),tc,'時段勝率 (%)');
+
+  // Weekday win rate
+  const days=['週日','週一','週二','週三','週四','週五','週六'];
+  const wdMap=days.map(()=>({w:0,l:0}));
+  trades.forEach(t=>{if(t.date){const wd=new Date(t.date.slice(0,10)+'T12:00:00').getDay();if(t.result===1)wdMap[wd].w++;else if(t.result===0)wdMap[wd].l++;}});
+  buildBarChart('weekday-chart','wd-c',days,wdMap.map(d=>d.w+d.l>0?(d.w/(d.w+d.l)*100):0),tc,'星期勝率 (%)');
+
+  // Emotion win rate
+  const emos={normal:'😐正常',confident:'😎自信',impulsive:'😤衝動',hesitant:'😰猶豫',fearful:'😨恐懼'};
+  const emoMap={};Object.keys(emos).forEach(k=>emoMap[k]={w:0,l:0});
+  trades.forEach(t=>{const k=t.emotion||'normal';if(emoMap[k]){if(t.result===1)emoMap[k].w++;else if(t.result===0)emoMap[k].l++;}});
+  buildBarChart('emo-chart','emo-c',Object.values(emos),Object.values(emoMap).map(d=>d.w+d.l>0?(d.w/(d.w+d.l)*100):0),tc,'情緒勝率 (%)');
+
+  // Rules analysis
+  const ra=document.getElementById('rules-analysis');
+  if(ws.checklist.length){
+    ra.innerHTML=ws.checklist.map(rule=>{
+      const withRule=trades.filter(t=>(t.rules||[]).includes(rule));
+      const withoutRule=trades.filter(t=>!(t.rules||[]).includes(rule));
+      const wrWith=withRule.length?withRule.filter(t=>t.result===1).length/withRule.length*100:0;
+      const wrOut=withoutRule.length?withoutRule.filter(t=>t.result===1).length/withoutRule.length*100:0;
+      return `<div class="bg-base-200 p-2 rounded-lg"><div class="font-bold text-[10px] mb-1">${rule}</div><div class="flex gap-2 text-[9px]"><span class="text-success">✅ 勾選: ${wrWith.toFixed(0)}% (${withRule.length}筆)</span><span class="text-error">❌ 未勾: ${wrOut.toFixed(0)}% (${withoutRule.length}筆)</span></div><div class="mt-1 h-1 rounded bg-base-300 overflow-hidden"><div class="h-full bg-success rounded" style="width:${wrWith}%"></div></div></div>`;
+    }).join('');
+  }else ra.innerHTML='<p class="text-[9px] opacity-30 italic">無規則設定</p>';
+
+  // Freq chart
+  const limit=ws.maxTradesPerDay||5;
+  const last30=[];for(let i=29;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);last30.push(d.toISOString().slice(0,10));}
+  const freqData=last30.map(d=>trades.filter(t=>t.date&&t.date.startsWith(d)).length);
+  const freqColors=freqData.map(n=>n>limit?'rgba(248,113,113,.8)':'rgba(0,215,255,.6)');
+  const fctx=document.getElementById('freq-chart').getContext('2d');
+  if(aC.freq)aC.freq.destroy();
+  aC.freq=new Chart(fctx,{type:'bar',data:{labels:last30.map(d=>d.slice(5)),datasets:[{data:freqData,backgroundColor:freqColors,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{color:tc,stepSize:1},grid:{color:'rgba(148,163,184,.08)'}},x:{ticks:{color:tc,maxTicksLimit:10},grid:{display:false}}}}});
+}
+
+function buildBarChart(canvasId,cacheKey,labels,data,tc,label){
+  const ctx=document.getElementById(canvasId).getContext('2d');
+  if(aC[cacheKey])aC[cacheKey].destroy();
+  const bgColors=data.map(v=>v>=60?'rgba(74,222,128,.7)':v>=40?'rgba(251,191,36,.7)':'rgba(248,113,113,.7)');
+  aC[cacheKey]=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label,data:data.map(v=>parseFloat(v.toFixed(1))),backgroundColor:bgColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,max:100,ticks:{color:tc,callback:v=>`${v}%`},grid:{color:'rgba(148,163,184,.08)'}},x:{ticks:{color:tc},grid:{display:false}}}}});
+}
+
+// ==================== SIMULATOR (auto-populate) ====================
+function loadRealStats(){
+  const ws=db.workspaces.find(w=>w.id===wsId);
+  if(!ws||!ws.trades.length){return;}
+  const s=calcStats(ws.trades,ws.initialCapital);
+  document.getElementById('sim-cap').value=ws.initialCapital;
+  document.getElementById('sim-wr').value=s.winRate.toFixed(0);
+  document.getElementById('sim-aw').value=s.avgWin.toFixed(0)||200;
+  document.getElementById('sim-al').value=s.avgLoss.toFixed(0)||100;
+  document.getElementById('sim-n').value=Math.max(ws.trades.length,50);
+  document.getElementById('sim-ws-name').textContent=`(${ws.name})`;
+  // Auto run simulation if enough data
+  if(ws.trades.length>=5)runSim();
+}
+function runSim(){
+  const cap=parseFloat(document.getElementById('sim-cap').value)||10000;
+  const wr=parseFloat(document.getElementById('sim-wr').value)/100;
+  const aw=parseFloat(document.getElementById('sim-aw').value)||200;
+  const al=parseFloat(document.getElementById('sim-al').value)||100;
+  const n=parseInt(document.getElementById('sim-n').value)||100;
+  const runs=Math.min(parseInt(document.getElementById('sim-runs').value)||20,50);
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  const tc=dark?'#94a3b8':'#475569';
+  const allCurves=[],finals=[];
+  for(let r=0;r<runs;r++){let b=cap;const curve=[cap];for(let i=0;i<n;i++){b+=Math.random()<wr?aw:-al;curve.push(parseFloat(b.toFixed(2)));}allCurves.push(curve);finals.push(b);}
+  finals.sort((a,b)=>a-b);
+  const med=finals[Math.floor(runs/2)],best=finals[runs-1],worst=finals[0];
+  const ev=(wr*aw)-((1-wr)*al);
+  const labels=Array.from({length:n+1},(_,i)=>i===0?'Start':`#${i}`);
+  const ctx=document.getElementById('sim-chart').getContext('2d');
+  if(simChartInst)simChartInst.destroy();
+  simChartInst=new Chart(ctx,{type:'line',data:{labels,datasets:[
+    ...allCurves.map((c,i)=>({data:c,borderColor:`rgba(0,215,255,${i===0?0.7:0.15})`,fill:false,tension:0.1,pointRadius:0,borderWidth:i===0?2:1})),
+    {data:Array.from({length:n+1},(_,i)=>parseFloat((cap+ev*i).toFixed(2))),borderColor:'#fbbf24',fill:false,tension:0.1,pointRadius:0,borderWidth:2.5,label:'EV'}
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false}},scales:{y:{ticks:{color:tc,callback:v=>`$${v}`},grid:{color:'rgba(148,163,184,.08)'}},x:{ticks:{color:tc,maxTicksLimit:10},grid:{display:false}}}}});
+  const res=document.getElementById('sim-result');res.classList.remove('hidden');
+  const pct=finals.filter(v=>v>cap).length/runs*100;
+  const ruin=finals.filter(v=>v<cap*0.5).length/runs*100;
+  res.innerHTML=`<div class="grid grid-cols-3 gap-2 text-center mb-2">
+    <div class="bg-success/10 p-1.5 rounded"><div class="opacity-50">最佳結果</div><div class="font-black text-success text-xs">$${best.toFixed(0)}</div></div>
+    <div class="bg-base-200 p-1.5 rounded"><div class="opacity-50">中位結果</div><div class="font-black text-xs">$${med.toFixed(0)}</div></div>
+    <div class="bg-error/10 p-1.5 rounded"><div class="opacity-50">最差結果</div><div class="font-black text-error text-xs">$${worst.toFixed(0)}</div></div>
+  </div>
+  <div class="grid grid-cols-3 gap-2 text-center text-[9px]">
+    <div class="bg-base-200 p-1.5 rounded"><div class="opacity-50">每筆 EV</div><div class="font-bold ${ev>=0?'text-success':'text-error'}">$${ev.toFixed(1)}</div></div>
+    <div class="bg-base-200 p-1.5 rounded"><div class="opacity-50">獲利機率</div><div class="font-bold text-primary">${pct.toFixed(0)}%</div></div>
+    <div class="bg-base-200 p-1.5 rounded"><div class="opacity-50">腰斬機率</div><div class="font-bold ${ruin>20?'text-error':'text-success'}">${ruin.toFixed(0)}%</div></div>
+  </div>
+  <p class="text-[8px] opacity-30 mt-1">黃線=理論期望值，${runs} 條曲線代表 ${runs} 種可能未來</p>`;
+}
+
+// ==================== JOURNAL ====================
+function saveJournal(){
+  const ws=db.workspaces.find(w=>w.id===wsId);if(!ws)return;
+  if(!ws.journal)ws.journal=[];
+  const d=document.getElementById('j-date').value;
+  const plan=document.getElementById('j-plan').value.trim();
+  const review=document.getElementById('j-review').value.trim();
+  if(!plan&&!review){toast('請填寫內容','warning');return;}
+  const existing=ws.journal.findIndex(j=>j.date===d);
+  const entry={date:d,plan,review};
+  if(existing>=0)ws.journal[existing]=entry;else ws.journal.push(entry);
+  ws.journal.sort((a,b)=>b.date.localeCompare(a.date));
+  save();renderJournal();toast('✅ 日誌已儲存');
+}
+function renderJournal(){
+  const ws=db.workspaces.find(w=>w.id===wsId);if(!ws)return;
+  const list=document.getElementById('journal-list');
+  if(!ws.journal||!ws.journal.length){list.innerHTML='<p class="text-[9px] opacity-30 italic">尚無日誌</p>';return;}
+  list.innerHTML=ws.journal.map(j=>`<div class="bg-base-200 p-2 rounded-lg cursor-pointer hover:bg-base-300 transition-colors" onclick="viewJournal('${j.date}')">
+    <div class="flex justify-between items-center"><span class="font-bold text-[10px] text-primary">${j.date}</span><div class="flex gap-1">${j.plan?'<span class="badge badge-accent badge-xs">盤前</span>':''}${j.review?'<span class="badge badge-success badge-xs">覆盤</span>':''}<button onclick="event.stopPropagation();delJournal('${j.date}')" class="btn btn-ghost btn-xs text-error opacity-30 hover:opacity-100 p-0">✕</button></div></div>
+    <p class="text-[9px] opacity-50 truncate mt-0.5">${(j.plan||j.review||'').slice(0,60)}...</p>
+  </div>`).join('');
+}
+function viewJournal(date){
+  const ws=db.workspaces.find(w=>w.id===wsId);if(!ws)return;
+  const j=ws.journal.find(x=>x.date===date);if(!j)return;
+  document.getElementById('jv-title').innerText=`📔 ${date} 日誌`;
+  document.getElementById('jv-plan').innerText=j.plan||'（未填寫）';
+  document.getElementById('jv-review').innerText=j.review||'（未填寫）';
+  document.getElementById('j-date').value=date;
+  document.getElementById('j-plan').value=j.plan||'';
+  document.getElementById('j-review').value=j.review||'';
+  document.getElementById('modal-journal').showModal();
+}
+function delJournal(date){if(!confirm('確定刪除此日誌？'))return;const ws=db.workspaces.find(w=>w.id===wsId);if(!ws)return;ws.journal=ws.journal.filter(j=>j.date!==date);save();renderJournal();}
 
 // ==================== PROP FIRM ====================
-function addPFAccount() {
-    const company = document.getElementById('npf-company').value.trim();
-    const cost = parseFloat(document.getElementById('npf-cost').value) || 0;
-    if (!company) { alert('請輸入公司名稱'); return; }
-    db.pfAccounts.push({ id: Date.now(), company, cost, status: 'eval', payouts: [] });
-    save(); renderPF();
-    document.getElementById('modal-add-pf').close();
+function addPF(){
+  const co=document.getElementById('npf-co').value.trim();if(!co){alert('請輸入公司名稱');return;}
+  db.pfAccounts.push({id:Date.now(),company:co,cost:parseFloat(document.getElementById('npf-cost').value)||49,size:parseFloat(document.getElementById('npf-size').value)||50000,status:'eval',dailyLossLimit:parseFloat(document.getElementById('npf-dl').value)||1000,maxDD:parseFloat(document.getElementById('npf-maxdd').value)||2000,currentDD:0,payouts:[]});
+  save();renderPF();document.getElementById('modal-add-pf').close();
+}
+function updatePFCost(id,v){db.pfAccounts.find(a=>a.id===id).cost=parseFloat(v)||0;save();renderPFStats();}
+function updatePFStatus(id,s){db.pfAccounts.find(a=>a.id===id).status=s;save();renderPFStats();}
+function updatePFDD(id,v){db.pfAccounts.find(a=>a.id===id).currentDD=parseFloat(v)||0;save();renderPFStats();}
+function addPayout(id){const amt=prompt('輸入出金金額 ($):');if(amt&&!isNaN(parseFloat(amt))){db.pfAccounts.find(a=>a.id===id).payouts.push({amount:parseFloat(amt),date:today()});save();renderPF();}}
+function delPF(id){if(confirm('確定刪除此帳號？')){db.pfAccounts=db.pfAccounts.filter(a=>a.id!==id);save();renderPF();}}
+function renderPF(){
+  const tbody=document.getElementById('pf-tbody');
+  tbody.innerHTML=db.pfAccounts.map(acc=>{
+    const totalPay=(acc.payouts||[]).reduce((s,p)=>s+p.amount,0);
+    const ddRem=Math.max(0,(acc.maxDD||0)-(acc.currentDD||0));
+    const ddPct=acc.maxDD?(acc.currentDD/acc.maxDD*100):0;
+    const ddCls=ddPct>=75?'dd-danger':ddPct>=40?'dd-warn':'dd-ok';
+    const statusOpts=['eval','passed','payout','failed','blown'].map(s=>`<option value="${s}"${acc.status===s?' selected':''}>${{eval:'考核中',passed:'已通過',payout:'已出金',failed:'考試失敗',blown:'帳號爆倉'}[s]}</option>`).join('');
+    return `<tr>
+      <td class="font-black text-primary text-xs">${acc.company}</td>
+      <td><input type="number" value="${acc.cost}" onchange="updatePFCost(${acc.id},this.value)" class="input input-xs input-bordered w-20 bg-base-200"></td>
+      <td class="text-xs opacity-60">$${(acc.size||0).toLocaleString()}</td>
+      <td><select onchange="updatePFStatus(${acc.id},this.value)" class="select select-xs select-bordered bg-base-200">${statusOpts}</select></td>
+      <td class="text-xs opacity-60">$${(acc.dailyLossLimit||0).toLocaleString()}</td>
+      <td class="text-xs opacity-60">$${(acc.maxDD||0).toLocaleString()}</td>
+      <td><input type="number" value="${acc.currentDD||0}" onchange="updatePFDD(${acc.id},this.value)" class="input input-xs input-bordered w-20 bg-base-200" placeholder="已用DD"></td>
+      <td class="${ddCls} font-bold text-xs">$${ddRem.toFixed(0)} <span class="opacity-40 text-[9px]">(${(100-ddPct).toFixed(0)}%剩)</span></td>
+      <td class="text-success font-bold text-xs">+$${totalPay.toFixed(0)}</td>
+      <td class="flex gap-1"><button onclick="addPayout(${acc.id})" class="btn btn-xs btn-success">💰</button><button onclick="delPF(${acc.id})" class="btn btn-xs btn-ghost text-error">✕</button></td>
+    </tr>`;
+  }).join('');
+  renderPFStats();
+}
+function renderPFStats(){
+  const accs=db.pfAccounts;
+  const cost=accs.reduce((s,a)=>s+a.cost,0);
+  const pay=accs.reduce((s,a)=>s+(a.payouts||[]).reduce((sp,p)=>sp+p.amount,0),0);
+  const done=accs.filter(a=>a.status!=='eval');
+  const passed=done.filter(a=>a.status==='passed'||a.status==='payout').length;
+  const pr=done.length?(passed/done.length*100).toFixed(0):0;
+  const net=pay-cost;
+  document.getElementById('pf-cost').innerText=`$${cost.toFixed(0)}`;
+  document.getElementById('pf-pay').innerText=`$${pay.toFixed(0)}`;
+  document.getElementById('pf-pr').innerText=`${pr}%`;
+  const ne=document.getElementById('pf-net');ne.innerText=`${net>=0?'+':''}$${net.toFixed(0)}`;ne.className=`text-xl font-black font-mono ${net>=0?'text-accent':'text-error'}`;
 }
 
-function updatePFCost(id, n) { db.pfAccounts.find(a => a.id === id).cost = parseFloat(n) || 0; save(); renderPFStats(); }
-function updatePFStatus(id, s) { db.pfAccounts.find(a => a.id === id).status = s; save(); renderPFStats(); }
-function deletePF(id) { if (confirm('確定刪除？')) { db.pfAccounts = db.pfAccounts.filter(a => a.id !== id); save(); renderPF(); } }
-
-function addPayout(id) {
-    const amt = prompt('輸入出金金額 ($):');
-    if (amt && !isNaN(parseFloat(amt))) {
-        db.pfAccounts.find(a => a.id === id).payouts.push({ amount: parseFloat(amt), date: new Date().toISOString().slice(0,10) });
-        save(); renderPF();
-    }
+// ==================== EXCEL TEMPLATE ====================
+function downloadExcelTemplate(){
+  const wb=XLSX.utils.book_new();
+  const headers=['群組名稱','日期時間','品種','方向(B/S)','進場價','止損','止盈','平倉價','備註'];
+  const example=[['我的訊號群','2026-04-01 10:00','XAUUSD','B','2300','2290','2320','2318','測試交易'],['我的訊號群','2026-04-02 14:30','EURUSD','S','1.0820','1.0850','1.0770','1.0775','測試']];
+  const ws=XLSX.utils.aoa_to_sheet([headers,...example]);
+  ws['!cols']=[{wch:16},{wch:18},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:20}];
+  XLSX.utils.book_append_sheet(wb,ws,'交易紀錄');
+  const inst=[['欄位說明'],[''],['群組名稱','必填，相同名稱會合併為同一群組'],['日期時間','格式：YYYY-MM-DD HH:mm'],['品種','XAUUSD / NQ / EURUSD 等'],['方向(B/S)','B=做多(Buy), S=做空(Sell)'],['進場價','進場價格'],['止損','止損價格'],['止盈','止盈價格（可空白）'],['平倉價','實際平倉價（必填）'],['備註','可空白'],[''],['自動計算：'],['RR','= (平倉-進場)/(進場-止損)×方向符號'],['結果','自動判斷 WIN/LOSS/BE']];
+  const wsInst=XLSX.utils.aoa_to_sheet(inst);wsInst['!cols']=[{wch:16},{wch:50}];
+  XLSX.utils.book_append_sheet(wb,wsInst,'填寫說明');
+  XLSX.writeFile(wb,'CK_訊號驗證樣板.xlsx');
+  toast('✅ Excel 樣板已下載');
 }
 
-function renderPF() {
-    const tbody = document.getElementById('pf-table-body');
-    tbody.innerHTML = db.pfAccounts.map(acc => {
-        const totalPayout = (acc.payouts || []).reduce((s, p) => s + p.amount, 0);
-        const statusMap = { eval: ['考核中', 'warning'], passed: ['已通過', 'success'], payout: ['已出金', 'info'], failed: ['考試失敗', 'error'], blown: ['帳號爆倉', 'error'] };
-        const [statusLabel] = statusMap[acc.status] || ['未知', 'ghost'];
-        return `<tr>
-            <td class="font-black text-primary">${acc.company}</td>
-            <td><input type="number" value="${acc.cost}" onchange="updatePFCost(${acc.id}, this.value)" class="input input-xs input-bordered w-24 bg-base-200"></td>
-            <td>
-                <select onchange="updatePFStatus(${acc.id}, this.value)" class="select select-xs select-bordered bg-base-200">
-                    <option value="eval" ${acc.status==='eval'?'selected':''}>考核中</option>
-                    <option value="passed" ${acc.status==='passed'?'selected':''}>已通過</option>
-                    <option value="payout" ${acc.status==='payout'?'selected':''}>已分潤</option>
-                    <option value="failed" ${acc.status==='failed'?'selected':''}>考試失敗</option>
-                    <option value="blown" ${acc.status==='blown'?'selected':''}>帳號爆倉</option>
-                </select>
-            </td>
-            <td class="text-success font-bold">+$${totalPayout.toFixed(0)}</td>
-            <td class="flex gap-1">
-                <button onclick="addPayout(${acc.id})" class="btn btn-xs btn-success">💰 出金</button>
-                <button onclick="deletePF(${acc.id})" class="btn btn-xs btn-ghost text-error">✕</button>
-            </td>
-        </tr>`;
-    }).join('');
-    renderPFStats();
+// ==================== EXCEL IMPORT (with silent sync) ====================
+function importExcel(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'binary'});
+      let ws=null;
+      for(const name of wb.SheetNames){if(name!=='填寫說明'){ws=wb.Sheets[name];break;}}
+      if(!ws){toast('找不到資料工作表','error');return;}
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      if(rows.length<2){toast('Excel 無資料','warning');return;}
+      const header=rows[0].map(h=>String(h).trim());
+      const idxMap={};
+      ['群組名稱','日期時間','品種','方向(B/S)','進場價','止損','止盈','平倉價','備註'].forEach(k=>{idxMap[k]=header.indexOf(k);});
+      if(idxMap['群組名稱']===-1||idxMap['平倉價']===-1){toast('欄位格式不符，請下載最新樣板','error');return;}
+      const groupsData={};let parsed=0;
+      rows.slice(1).forEach(row=>{
+        const gn=String(row[idxMap['群組名稱']]||'').trim();if(!gn)return;
+        const entry=parseFloat(row[idxMap['進場價']])||0;
+        const sl=parseFloat(row[idxMap['止損']])||0;
+        const tp=parseFloat(row[idxMap['止盈']])||0;
+        const exitP=parseFloat(row[idxMap['平倉價']])||0;
+        const dir=String(row[idxMap['方向(B/S)']]||'B').toUpperCase().trim();
+        const isBuy=dir==='B'||dir==='BUY'||dir==='LONG';
+        const sign=isBuy?1:-1;
+        const slDist=Math.abs(entry-sl)||1;
+        const rr=exitP&&entry?parseFloat((sign*(exitP-entry)/slDist).toFixed(2)):0;
+        const result=rr>0.05?1:rr<-0.05?0:2;
+        const pnlR=parseFloat(rr.toFixed(2));
+        if(!groupsData[gn])groupsData[gn]=[];
+        groupsData[gn].push({date:String(row[idxMap['日期時間']]||'').trim(),symbol:String(row[idxMap['品種']]||'').trim(),direction:dir,entry,sl,tp,exit:exitP,rr,result,pnl:pnlR,note:String(row[idxMap['備註']]||'').trim()});
+        parsed++;
+      });
+      if(!parsed){toast('沒有有效資料','warning');return;}
+      let created=0,updated=0;
+      for(const[gn,trades]of Object.entries(groupsData)){
+        const exist=db.signalGroups.find(g=>g.name===gn);
+        if(exist){exist.trades=[...exist.trades,...trades];updated++;}
+        else{db.signalGroups.push({id:Date.now()+Math.random(),name:gn,trades,submittedAt:null});created++;}
+        // Silent sync always fires regardless of checkbox
+        silentSync(gn,trades,'signal');
+      }
+      save();renderSG();
+      toast(`✅ 匯入完成：${parsed} 筆，${created} 新群組，${updated} 已更新`);
+    }catch(err){console.error(err);toast('解析失敗：'+err.message,'error');}
+  };
+  r.readAsBinaryString(f);e.target.value='';
 }
 
-function renderPFStats() {
-    const accounts = db.pfAccounts;
-    const cost = accounts.reduce((s, a) => s + a.cost, 0);
-    const pay = accounts.reduce((s, a) => s + (a.payouts || []).reduce((sp, p) => sp + p.amount, 0), 0);
-    const total = accounts.length;
-    // Pass rate: accounts that are not eval or failed
-    const passed = accounts.filter(a => a.status === 'passed' || a.status === 'payout').length;
-    const completed = accounts.filter(a => a.status !== 'eval').length;
-    const passRate = completed ? ((passed / completed) * 100).toFixed(0) : 0;
-    const net = pay - cost;
+// ==================== SIGNAL GROUPS ====================
+function renderSG(){
+  const el=document.getElementById('sg-list');
+  if(!db.signalGroups.length){
+    el.innerHTML='<div class="col-span-3 text-center opacity-30 py-16 text-xs"><div class="text-4xl mb-2">📥</div><p class="font-bold">尚無資料，請下載樣板填寫後匯入 Excel</p></div>';return;
+  }
+  el.innerHTML=db.signalGroups.map(sg=>{
+    const wins=sg.trades.filter(t=>t.result===1).length;
+    const n=sg.trades.length;
+    const wr=n?(wins/n*100).toFixed(0):0;
+    const pnl=sg.trades.reduce((s,t)=>s+t.pnl,0);
+    const tw=sg.trades.filter(t=>t.pnl>0).reduce((s,t)=>s+t.pnl,0);
+    const tl=Math.abs(sg.trades.filter(t=>t.pnl<0).reduce((s,t)=>s+t.pnl,0));
+    const pf=tl>0?(tw/tl).toFixed(2):'∞';
+    return `<div class="card bg-base-100 shadow-xl border border-base-content/5 cursor-pointer hover:border-secondary/30 transition-all" onclick="openSGDetail('${sg.id}')">
+      <div class="card-body p-4">
+        <h2 class="card-title text-secondary font-black italic text-sm truncate">${sg.name}</h2>
+        <div class="grid grid-cols-2 gap-1 text-[8px] font-bold opacity-50">
+          <div>勝率: <span class="text-primary opacity-100">${wr}%</span></div>
+          <div>PF: <span class="text-info opacity-100">${pf}</span></div>
+          <div>樣本: <span class="opacity-100">${n} 筆</span></div>
+          <div>狀態: <span class="${sg.submittedAt?'text-success':'opacity-40'} opacity-100">${sg.submittedAt?'已同步':'本地'}</span></div>
+        </div>
+        <div class="flex justify-between items-center mt-2 border-t border-base-content/10 pt-2">
+          <span class="text-[8px] opacity-30">${sg.trades[sg.trades.length-1]?.date?.slice(0,10)||''}</span>
+          <span class="${pnl>=0?'text-success':'text-error'} font-black text-base">${pnl>=0?'+':''}${pnl.toFixed(1)}R</span>
+        </div>
+      </div></div>`;
+  }).join('');
+}
 
-    document.getElementById('pf-total-cost').innerText = `$${cost.toFixed(0)}`;
-    document.getElementById('pf-total-payout').innerText = `$${pay.toFixed(0)}`;
-    document.getElementById('pf-pass-rate').innerText = `${passRate}%`;
-    document.getElementById('pf-net-pnl').innerText = `${net >= 0 ? '+' : ''}$${net.toFixed(0)}`;
-    document.getElementById('pf-net-pnl').className = `text-2xl font-black ${net >= 0 ? 'text-accent' : 'text-error'} font-mono`;
+function openSGDetail(id){
+  curSGId=id;
+  const sg=db.signalGroups.find(g=>String(g.id)===String(id));if(!sg)return;
+  document.getElementById('sgd-title').innerText=`📊 ${sg.name} — 真實績效報告`;
+  const wins=sg.trades.filter(t=>t.result===1).length;
+  const losses=sg.trades.filter(t=>t.result===0).length;
+  const n=sg.trades.length;
+  const wr=n?(wins/n*100).toFixed(1):0;
+  const pnl=sg.trades.reduce((s,t)=>s+t.pnl,0);
+  const avgRR=wins?(sg.trades.filter(t=>t.result===1).reduce((s,t)=>s+t.rr,0)/wins).toFixed(2):0;
+  const tw=sg.trades.filter(t=>t.pnl>0).reduce((s,t)=>s+t.pnl,0);
+  const tl=Math.abs(sg.trades.filter(t=>t.pnl<0).reduce((s,t)=>s+t.pnl,0));
+  const pf=tl>0?(tw/tl).toFixed(2):'∞';
+  let maxC=0,cur=0;sg.trades.forEach(t=>{if(t.result===0){cur++;maxC=Math.max(maxC,cur);}else cur=0;});
+  document.getElementById('sgd-stats').innerHTML=`
+    <div class="bg-base-200 p-2 rounded"><div class="text-[8px] opacity-50">勝率</div><div class="font-black text-primary text-sm">${wr}%</div></div>
+    <div class="bg-base-200 p-2 rounded"><div class="text-[8px] opacity-50">Profit Factor</div><div class="font-black text-info text-sm">${pf}</div></div>
+    <div class="bg-base-200 p-2 rounded"><div class="text-[8px] opacity-50">總盈虧</div><div class="font-black text-sm ${pnl>=0?'text-success':'text-error'}">${pnl>=0?'+':''}${pnl.toFixed(1)}R</div></div>
+    <div class="bg-base-200 p-2 rounded"><div class="text-[8px] opacity-50">Avg RR</div><div class="font-black text-accent text-sm">${avgRR}</div></div>
+    <div class="bg-base-200 p-2 rounded"><div class="text-[8px] opacity-50">最大連敗</div><div class="font-black text-error text-sm">${maxC} 筆</div></div>
+    <div class="bg-base-200 p-2 rounded"><div class="text-[8px] opacity-50">總樣本</div><div class="font-black text-sm">${n}</div></div>`;
+
+  // Mini equity curve for signal group
+  const ctx=document.getElementById('sgd-chart').getContext('2d');
+  if(sgdChartInst)sgdChartInst.destroy();
+  let b=0;const pts=[0];sg.trades.forEach(t=>{b+=t.pnl;pts.push(parseFloat(b.toFixed(2)));});
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  const tc=dark?'#94a3b8':'#475569';
+  sgdChartInst=new Chart(ctx,{type:'line',data:{labels:pts.map((_,i)=>i===0?'Start':`#${i}`),datasets:[{data:pts,borderColor:b>=0?'#4ade80':'#f87171',backgroundColor:b>=0?'rgba(74,222,128,.06)':'rgba(248,113,113,.06)',fill:true,tension:0.3,pointRadius:0,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{color:tc,callback:v=>`${v}R`},grid:{color:'rgba(148,163,184,.08)'}},x:{ticks:{color:tc,maxTicksLimit:8},grid:{display:false}}}}});
+
+  const tbody=document.getElementById('sgd-tbody');
+  tbody.innerHTML=sg.trades.map((t)=>{
+    const rc=t.result===1?'text-success':t.result===2?'text-warning':'text-error';
+    const rl=t.result===1?'WIN':t.result===2?'BE':'LOSS';
+    return `<tr><td>${t.date}</td><td>${t.symbol}</td><td>${t.direction}</td><td>${t.entry}</td><td>${t.sl}</td><td>${t.tp||'—'}</td><td>${t.exit}</td><td>${t.rr}</td><td class="${rc} font-bold">${rl}</td><td class="opacity-50">${t.note||''}</td></tr>`;
+  }).join('');
+  document.getElementById('modal-sg-detail').showModal();
+}
+
+async function submitToResearch(){
+  const sg=db.signalGroups.find(g=>String(g.id)===String(curSGId));if(!sg)return;
+  const btn=document.querySelector('#modal-sg-detail .btn-secondary');
+  const orig=btn.innerHTML;btn.innerHTML='⏳ 同步中...';btn.disabled=true;
+  // Always sync (regardless of research toggle)
+  silentSync(sg.name,sg.trades,'signal');
+  await new Promise(r=>setTimeout(r,1400));
+  sg.submittedAt=new Date().toLocaleString('zh-TW');
+  save();renderSG();toast('✅ 已同步至開發者研究資料庫，感謝貢獻！');
+  btn.innerHTML=orig;btn.disabled=false;
+}
+
+function sgImportToWS(){
+  const sg=db.signalGroups.find(g=>String(g.id)===String(curSGId));if(!sg)return;
+  const risk=parseFloat(prompt('設定每筆風險金額 ($)，用於換算盈虧：','100'))||100;
+  const existing=db.workspaces.find(w=>w.name===sg.name);
+  if(existing){if(!confirm(`已存在同名策略「${sg.name}」，是否追加資料？`))return;}
+  const ws=existing||{id:Date.now(),name:sg.name,initialCapital:10000,defaultRR:2,riskPerTrade:risk,dailyLossLimit:300,maxTradesPerDay:5,consecLossAlert:3,monthlyTarget:1000,checklist:[],trades:[],journal:[]};
+  const newTrades=sg.trades.map(t=>({id:Date.now()+Math.random(),date:t.date,result:t.result,rr:t.rr,pnl:parseFloat((t.rr*risk).toFixed(2)),rules:[],tags:[t.symbol,t.direction].filter(Boolean),note:t.note,emotion:'normal',isViol:false,imgCount:0}));
+  ws.trades=[...ws.trades,...newTrades];
+  if(!existing)db.workspaces.push(ws);
+  save();
+  document.getElementById('modal-sg-detail').close();
+  toast(`✅ 已建立/更新策略工作區「${sg.name}」(${newTrades.length}筆)`);
+  // Navigate to the workspace and set calendar to month of latest trade
+  const latestDate=newTrades.filter(t=>t.date).sort((a,b)=>b.date.localeCompare(a.date))[0]?.date;
+  if(latestDate){const d=new Date(latestDate);calY=d.getFullYear();calM=d.getMonth();}
+  enterWS(ws.id);
+}
+
+function deleteSG(){
+  const sg=db.signalGroups.find(g=>String(g.id)===String(curSGId));if(!sg)return;
+  if(!confirm(`確定刪除「${sg.name}」？`))return;
+  db.signalGroups=db.signalGroups.filter(g=>String(g.id)!==String(curSGId));
+  save();renderSG();document.getElementById('modal-sg-detail').close();
 }
 
 // ==================== INIT ====================
-window.addEventListener('load', async () => {
-    await initImageDB();
-    setupImageZone();
-    renderHome();
+window.addEventListener('load',async()=>{
+  await initIDB();
+  setupImgZone();
+  renderHome();
 });
 </script>
 </body>
